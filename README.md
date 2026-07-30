@@ -122,8 +122,10 @@ Online evaluation on live traffic:
 
 ## Ingestion (API-Football → Postgres)
 
-One dlt pipeline loads teams, standings, fixtures, and lineups for World Cup 2026
-(league 1, season 2026). Lineups cost 1 API call per fixture, so the pipeline is
+One dlt pipeline loads teams, standings, fixtures, and lineups for the FIFA World Cup
+(league 1). The season is pinned to 2022 (Qatar) because API-Football's free plan only
+exposes seasons 2022–2024 — season 2026 requires a paid plan; flip `SEASON` in
+`ingestion/football/__init__.py` if that changes. Lineups cost 1 API call per fixture, so the pipeline is
 budgeted (`MAX_REQUESTS_PER_RUN`, default 90) and resumable — re-run it daily until
 complete; finished runs are no-ops on the expensive endpoint.
 

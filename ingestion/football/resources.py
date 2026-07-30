@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 _LEAGUE_PARAMS = {"league": LEAGUE_ID, "season": SEASON}
 _MAX_HONORED_RETRY_AFTER_SECONDS = 60
 
+# The free plan enforces 10 requests/minute on top of the daily cap; 7s spacing
+# keeps a long lineups run safely under it.
+DEFAULT_DELAY_SECONDS = 7.0
+
 
 @dlt.resource(name="teams", primary_key="team__id", write_disposition="merge")
 def teams(client):
@@ -53,7 +57,7 @@ def _fetch_lineups(client, fixture_id):
 @dlt.resource(
     name="lineups", primary_key=("fixture_id", "team__id"), write_disposition="merge"
 )
-def lineups(client, fixture_ids, delay_seconds: float = 1.0):
+def lineups(client, fixture_ids, delay_seconds: float = DEFAULT_DELAY_SECONDS):
     for index, fixture_id in enumerate(fixture_ids):
         if index and delay_seconds:
             time.sleep(delay_seconds)

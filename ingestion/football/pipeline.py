@@ -13,7 +13,13 @@ from dotenv import load_dotenv
 
 from ingestion.football.budget import select_fixtures_to_fetch
 from ingestion.football.client import ApiFootballClient
-from ingestion.football.resources import fixtures, lineups, standings, teams
+from ingestion.football.resources import (
+    DEFAULT_DELAY_SECONDS,
+    fixtures,
+    lineups,
+    standings,
+    teams,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +63,9 @@ def get_loaded_fixture_ids(pipeline) -> set:
         return set()
 
 
-def run(client, pipeline, budget: int, delay_seconds: float = 1.0) -> None:
+def run(
+    client, pipeline, budget: int, delay_seconds: float = DEFAULT_DELAY_SECONDS
+) -> None:
     pipeline.run([teams(client), standings(client), fixtures(client)])
     logger.info("Loaded teams, standings, fixtures (3 API calls)")
 
