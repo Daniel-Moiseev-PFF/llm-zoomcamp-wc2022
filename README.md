@@ -117,3 +117,22 @@ Online evaluation on live traffic:
 > - Environment variables — API-Football key, LLM API key
 > - Ingestion commands — structured (dlt) and prose (manifest) pipelines
 > - Pinned dependency versions
+
+---
+
+## Ingestion (API-Football → Postgres)
+
+One dlt pipeline loads teams, standings, fixtures, and lineups for World Cup 2026
+(league 1, season 2026). Lineups cost 1 API call per fixture, so the pipeline is
+budgeted (`MAX_REQUESTS_PER_RUN`, default 90) and resumable — re-run it daily until
+complete; finished runs are no-ops on the expensive endpoint.
+
+```bash
+docker compose up -d                              # start Postgres
+uv run python -m ingestion.football.pipeline      # run the pipeline (re-runnable)
+uv run pytest                                     # tests (never hit the live API)
+uv run python scripts/smoke_test.py               # MANUAL: 1 real API call to /status
+```
+
+Required in `.env`: `FOOTBALL_API_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_DB` (optional: `POSTGRES_HOST`, `POSTGRES_PORT`, `MAX_REQUESTS_PER_RUN`).
