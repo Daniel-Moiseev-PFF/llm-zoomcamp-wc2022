@@ -35,7 +35,12 @@ class Chunk(NamedTuple):
 def _section_text(section) -> str:
     code = mwparserfromhell.parse(str(section))
     for node in code.filter_tags(matches=lambda tag: str(tag.tag) in _SKIP_TAGS):
-        code.remove(node)
+        try:
+            code.remove(node)
+        except ValueError:
+            # Nested inside a template or an already-removed node; strip_code
+            # drops its container anyway.
+            pass
     for heading in code.filter_headings():
         code.remove(heading)
     return code.strip_code(normalize=True, collapse=True).strip()

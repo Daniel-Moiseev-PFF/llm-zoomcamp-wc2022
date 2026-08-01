@@ -57,6 +57,12 @@ def test_table_only_and_boilerplate_sections_are_dropped():
     assert "References" not in headings
 
 
+def test_ref_nested_inside_template_does_not_crash():
+    text = "Intro sentence.{{Infobox|note=<ref>nested cite</ref>}}\n\n== Final ==\nProse here."
+    sections = split_sections(text)
+    assert ("Final", "Prose here.") in sections
+
+
 def test_short_section_stays_one_chunk():
     chunks = pack_chunks(["one two", "three four"], count_words, max_tokens=10)
     assert chunks == ["one two\nthree four"]

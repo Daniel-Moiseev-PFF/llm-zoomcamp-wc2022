@@ -44,14 +44,15 @@ Lineups are the key table: they power relational questions like *"did players X 
 
 ### Unstructured — Wikipedia
 
-A small, curated **manifest** of *tournament-level* articles. (Per-match reports are deliberately excluded — for a just-finished tournament they don't exist on Wikipedia yet; the narrative prose that does exist is tournament-level.) Candidate articles:
+A small, curated **manifest** of *tournament-level* articles (Qatar 2022, matching the structured data):
 
-- `2026 FIFA World Cup` — the main article, and the workhorse of the corpus
-- `2026 FIFA World Cup final`
-- `2026 FIFA World Cup final halftime show`
-- `2026 FIFA World Cup knockout stage`
+- `2022 FIFA World Cup` — the main article, and the workhorse of the corpus
+- `2022 FIFA World Cup final`
+- `2022 FIFA World Cup knockout stage`
+- `2022 FIFA World Cup opening ceremony`
+- `List of 2022 FIFA World Cup controversies`
 
-Each article is pinned to a specific **revision id** so the corpus is reproducible and doesn't drift as Wikipedia keeps updating.
+Each article is pinned to a specific **revision id** (`ingestion/prose/manifest.py`) so the corpus is reproducible and doesn't drift as Wikipedia keeps updating.
 
 Table-shaped sections (group standings, squads, base camps) are **not** ingested as prose — that data comes from the structured side. The rule: *sentences → prose index; cells → SQL.*
 
@@ -82,7 +83,7 @@ dlt REST-API pipeline → Postgres
 ## Storage
 
 - **Relational:** Postgres (dockerized)
-- **Prose / vector index:** Postgres + pgvector` extension for embeddings
+- **Prose / vector index:** Postgres + `pgvector` extension for embeddings (`pgvector/pgvector:pg16` image)
 
 ---
 
@@ -138,3 +139,22 @@ uv run python scripts/smoke_test.py               # MANUAL: 1 real API call to /
 
 Required in `.env`: `FOOTBALL_API_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
 `POSTGRES_DB` (optional: `POSTGRES_HOST`, `POSTGRES_PORT`, `MAX_REQUESTS_PER_RUN`).
+
+## Ingestion (Wikipedia → pgvector)
+
+The prose pipeline fetches the 5 pinned articles, splits them into per-section
+chunks (≤256 tokens, tables and boilerplate dropped), tags each chunk with the
+teams it mentions, embeds with `all-MiniLM-L6-v2` (ONNX, 384-dim), and writes to
+`prose.chunks` in the same Postgres. Full refresh on every run — no API keys or
+quotas involved. Embedding code follows the llm-zoomcamp course (ONNX Runtime
+instead of PyTorch).
+
+```bash
+uv run python scripts/download_model.py           # one-time: fetch the ONNX model
+uv run python -m ingestion.prose.pipeline         # fetch + chunk + embed + load
+uv run python -m ingestion.prose.search "Who scored in the final?"          # smoke search
+uv run python -m ingestion.prose.search "biggest scandal?" Switzerland      # team-filtered
+```
+
+Requires the structured pipeline to have run first (`football.teams` powers the
+team tagging).
