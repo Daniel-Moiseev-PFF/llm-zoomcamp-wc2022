@@ -90,7 +90,9 @@ dlt REST-API pipeline → Postgres
 
 ## Interface
 
-A simple **Streamlit** chat app. Each answer carries a 👍 / 👎 feedback control.
+A simple **Streamlit** chat app (`uv run streamlit run app/main.py`). Each answer
+carries a 👍 / 👎 feedback control, and every interaction is logged to Postgres
+for the monitoring dashboard.
 
 ---
 
@@ -183,3 +185,20 @@ Each answer prints a footer with the tools used, token count, and latency —
 the raw material for the monitoring milestone. Requires `OPENAI_API_KEY` in
 `.env` (optional: `OPENAI_MODEL`, default `gpt-5.4-mini`) and both ingestion
 pipelines to have run.
+
+## Chat UI (Streamlit)
+
+The Streamlit app wraps the same agent loop as the CLI in a chat transcript
+with multi-turn history. Each answer shows the CLI-style footer (tools, tokens,
+latency, plus cost) and a 👍/👎 control. Every interaction is logged to
+`monitoring.conversations` (question, answer, model, tokens, latency, cost,
+tool calls as JSONB) and each thumb click to `monitoring.feedback` — the data
+the monitoring/Grafana milestone will chart. Logging follows the llm-zoomcamp
+monitoring module; tables are created idempotently on first launch.
+
+```bash
+uv run streamlit run app/main.py                  # chat at http://localhost:8501
+uv run python -m monitoring.db                    # optional: init tables standalone
+```
+
+Same requirements as the CLI agent.
