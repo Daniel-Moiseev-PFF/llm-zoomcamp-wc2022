@@ -158,3 +158,24 @@ uv run python -m ingestion.prose.search "biggest scandal?" Switzerland      # te
 
 Requires the structured pipeline to have run first (`football.teams` powers the
 team tagging).
+
+## Agent (CLI chat)
+
+A handwritten agentic loop (OpenAI Responses API function calling, following the
+llm-zoomcamp agentic-RAG module) routes each question across three tools:
+
+- `execute_sql` — raw read-only SQL against `football.*`; the schema (including
+  the dlt child-table joins for lineups) is documented in the instructions, and
+  query errors are fed back to the agent so it can fix its own SQL
+- `search_prose` — pgvector cosine search over `prose.chunks`, optional team filter
+- `read_section` — expands a search hit into its full article section
+
+```bash
+uv run python -m agent.cli                                        # interactive chat (multi-turn)
+uv run python -m agent.cli "Did Messi and Mbappé play against each other?"   # one-shot
+```
+
+Each answer prints a footer with the tools used, token count, and latency —
+the raw material for the monitoring milestone. Requires `OPENAI_API_KEY` in
+`.env` (optional: `OPENAI_MODEL`, default `gpt-5.4-mini`) and both ingestion
+pipelines to have run.
