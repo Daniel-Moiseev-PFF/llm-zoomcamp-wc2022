@@ -45,10 +45,19 @@ general knowledge. Off-topic questions shouldn't be answered.
 - football.lineups__substitutes — bench players, same child-table join
   (_dlt_parent_id = lineups._dlt_id). Columns: player__id, player__name,
   player__number, player__pos.
+- football.events — in-match events, one row per event.
+  Columns: fixture_id (joins fixtures.fixture__id), time__elapsed (minute),
+  time__extra (stoppage-time minute or NULL), team__id, team__name,
+  player__id, player__name, assist__id, assist__name, type ('Goal', 'Card',
+  'subst', 'Var'), detail (e.g. 'Normal Goal', 'Penalty', 'Own Goal',
+  'Yellow Card', 'Red Card', 'Substitution 1').
+  For type = 'subst': player is the one COMING OFF, assist is the one
+  COMING ON. For goals, assist is the assisting player. Use this table for
+  "what minute", goalscorers, cards, and substitution questions.
 
 Notes: player names carry accents and initials (e.g. 'L. Messi', 'K. Mbappé'),
 so match with ILIKE '%...%'. A substitute being on the bench doesn't prove
-they played.
+they played — check football.events for a subst row where they came on.
 
 Worked example — "did Messi and Mbappé face each other?":
 

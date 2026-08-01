@@ -35,6 +35,7 @@ Ingested **once** from API-Football (World Cup = `league id 1`). Entities pulled
 
 - leagues, standings, teams, venues, coaches, players
 - fixtures / matches, lineups
+- in-match events (goals, cards, substitutions — with the minute they happened)
 
 Lineups are the key table: they power relational questions like *"did players X and Y play against each other?"* — a self-join on appearances in the same match on opposite teams.
 
@@ -123,12 +124,15 @@ Online evaluation on live traffic:
 
 ## Ingestion (API-Football → Postgres)
 
-One dlt pipeline loads teams, standings, fixtures, and lineups for the FIFA World Cup
-(league 1). The season is pinned to 2022 (Qatar) because API-Football's free plan only
-exposes seasons 2022–2024 — season 2026 requires a paid plan; flip `SEASON` in
-`ingestion/football/__init__.py` if that changes. Lineups cost 1 API call per fixture, so the pipeline is
-budgeted (`MAX_REQUESTS_PER_RUN`, default 90) and resumable — re-run it daily until
-complete; finished runs are no-ops on the expensive endpoint.
+One dlt pipeline loads teams, standings, fixtures, lineups, and match events for the
+FIFA World Cup (league 1). The season is pinned to 2022 (Qatar) because API-Football's
+free plan only exposes seasons 2022–2024 — season 2026 requires a paid plan; flip `SEASON` in
+`ingestion/football/__init__.py` if that changes. Lineups and events each cost 1 API call
+per fixture, so the pipeline is budgeted (`MAX_REQUESTS_PER_RUN`, default 90) and
+resumable — re-run it daily until complete; finished runs are no-ops on the expensive
+endpoints. Events carry the minute (`time__elapsed`) for goals, cards, and
+substitutions; in `subst` rows, `player` is the one coming off and `assist` the one
+coming on.
 
 ```bash
 docker compose up -d                              # start Postgres
