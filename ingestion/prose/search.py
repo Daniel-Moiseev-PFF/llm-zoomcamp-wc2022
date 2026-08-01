@@ -46,7 +46,8 @@ def main() -> None:
         results = search(query, Embedder(MODEL_PATH), conn, team=team)
     for r in results:
         print(f"[{r['similarity']:.3f}] {r['article']} :: {r['section']}")
-        print(f"    {r['content'][:200]}")
+        print(r["content"])
+        print()
 
 
 if __name__ == "__main__":
