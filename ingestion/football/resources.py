@@ -38,10 +38,10 @@ def fixtures(client):
     yield from client.get("/fixtures", params=_LEAGUE_PARAMS)
 
 
-def _fetch_lineups(client, fixture_id):
-    """One lineups call; on a short per-minute 429, honor Retry-After and retry once."""
+def _fetch_for_fixture(client, path, fixture_id):
+    """One per-fixture call; on a short per-minute 429, honor Retry-After and retry once."""
     try:
-        return client.get("/fixtures/lineups", params={"fixture": fixture_id})
+        return client.get(path, params={"fixture": fixture_id})
     except RateLimitError as exc:
         if exc.retry_after and exc.retry_after <= _MAX_HONORED_RETRY_AFTER_SECONDS:
             logger.info(
@@ -50,24 +50,23 @@ def _fetch_lineups(client, fixture_id):
                 exc.retry_after,
             )
             time.sleep(exc.retry_after)
-            return client.get("/fixtures/lineups", params={"fixture": fixture_id})
+            return client.get(path, params={"fixture": fixture_id})
         raise
 
 
-@dlt.resource(
-    name="lineups", primary_key=("fixture_id", "team__id"), write_disposition="merge"
-)
-def lineups(client, fixture_ids, delay_seconds: float = DEFAULT_DELAY_SECONDS):
+def _per_fixture_records(client, path, fixture_ids, delay_seconds):
+    """Fetch one budgeted endpoint per fixture: skip failed fixtures, stop the
+    whole run on a rate limit (already-yielded fixtures stay loaded)."""
     for index, fixture_id in enumerate(fixture_ids):
         if index and delay_seconds:
             time.sleep(delay_seconds)
         try:
-            records = _fetch_lineups(client, fixture_id)
+            records = _fetch_for_fixture(client, path, fixture_id)
         except RateLimitError as exc:
             logger.warning(
-                "Rate limit at fixture %s — stopping lineups for this run "
-                "(already-yielded fixtures stay loaded): %s",
+                "Rate limit at fixture %s — stopping %s for this run: %s",
                 fixture_id,
+                path,
                 exc,
             )
             break
@@ -81,3 +80,22 @@ def lineups(client, fixture_ids, delay_seconds: float = DEFAULT_DELAY_SECONDS):
             # key and the resumability check.
             record["fixture_id"] = fixture_id
             yield record
+
+
+@dlt.resource(
+    name="lineups", primary_key=("fixture_id", "team__id"), write_disposition="merge"
+)
+def lineups(client, fixture_ids, delay_seconds: float = DEFAULT_DELAY_SECONDS):
+    yield from _per_fixture_records(
+        client, "/fixtures/lineups", fixture_ids, delay_seconds
+    )
+
+
+# Events have no natural per-row key (two identical cards in the same minute are
+# legal), so merge on fixture_id alone: a re-load delete-inserts the fixture's
+# whole event list.
+@dlt.resource(name="events", merge_key="fixture_id", write_disposition="merge")
+def events(client, fixture_ids, delay_seconds: float = DEFAULT_DELAY_SECONDS):
+    yield from _per_fixture_records(
+        client, "/fixtures/events", fixture_ids, delay_seconds
+    )

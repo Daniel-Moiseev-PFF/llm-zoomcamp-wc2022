@@ -15,6 +15,7 @@ from ingestion.football.budget import select_fixtures_to_fetch
 from ingestion.football.client import ApiFootballClient
 from ingestion.football.resources import (
     DEFAULT_DELAY_SECONDS,
+    events,
     fixtures,
     lineups,
     standings,
@@ -43,24 +44,47 @@ def create_pipeline() -> dlt.Pipeline:
     )
 
 
-def _select_id_set(pipeline, query_template) -> set:
+def _select_id_set(pipeline, table, column) -> set:
     with pipeline.sql_client() as sql:
-        fixtures_table = sql.make_qualified_table_name("fixtures")
-        lineups_table = sql.make_qualified_table_name("lineups")
-        query = query_template.format(fixtures=fixtures_table, lineups=lineups_table)
+        qualified = sql.make_qualified_table_name(table)
+        query = f"SELECT DISTINCT {column} FROM {qualified}"
         return {row[0] for row in sql.execute_sql(query)}
 
 
 def get_all_fixture_ids(pipeline) -> set:
-    return _select_id_set(pipeline, "SELECT fixture__id FROM {fixtures}")
+    return _select_id_set(pipeline, "fixtures", "fixture__id")
+
+
+def _loaded_fixture_ids(pipeline, table) -> set:
+    try:
+        return _select_id_set(pipeline, table, "fixture_id")
+    except DatabaseUndefinedRelation:
+        # First run: the table doesn't exist yet — nothing loaded.
+        return set()
 
 
 def get_loaded_fixture_ids(pipeline) -> set:
-    try:
-        return _select_id_set(pipeline, "SELECT DISTINCT fixture_id FROM {lineups}")
-    except DatabaseUndefinedRelation:
-        # First run: the lineups table doesn't exist yet — nothing loaded.
-        return set()
+    return _loaded_fixture_ids(pipeline, "lineups")
+
+
+def get_event_loaded_fixture_ids(pipeline) -> set:
+    return _loaded_fixture_ids(pipeline, "events")
+
+
+def _run_budgeted(pipeline, resource, name, all_ids, loaded_ids, budget, delay_seconds):
+    """Fetch one per-fixture resource up to `budget` calls; return calls planned."""
+    to_fetch = select_fixtures_to_fetch(all_ids, loaded_ids, budget)
+    remaining = len(all_ids - loaded_ids)
+    logger.info(
+        "%d %s remaining -> fetching %d this run -> ~%d remaining after",
+        remaining,
+        name,
+        len(to_fetch),
+        remaining - len(to_fetch),
+    )
+    if to_fetch:
+        pipeline.run(resource(delay_seconds=delay_seconds, fixture_ids=to_fetch))
+    return len(to_fetch)
 
 
 def run(
@@ -70,17 +94,24 @@ def run(
     logger.info("Loaded teams, standings, fixtures (3 API calls)")
 
     all_ids = get_all_fixture_ids(pipeline)
-    loaded_ids = get_loaded_fixture_ids(pipeline)
-    to_fetch = select_fixtures_to_fetch(all_ids, loaded_ids, budget)
-    remaining = len(all_ids - loaded_ids)
-    logger.info(
-        "%d lineups remaining -> fetching %d this run -> ~%d remaining after",
-        remaining,
-        len(to_fetch),
-        remaining - len(to_fetch),
+    spent = _run_budgeted(
+        pipeline,
+        lambda **kw: lineups(client, **kw),
+        "lineups",
+        all_ids,
+        get_loaded_fixture_ids(pipeline),
+        budget,
+        delay_seconds,
     )
-    if to_fetch:
-        pipeline.run(lineups(client, to_fetch, delay_seconds=delay_seconds))
+    _run_budgeted(
+        pipeline,
+        lambda **kw: events(client, **kw),
+        "events",
+        all_ids,
+        get_event_loaded_fixture_ids(pipeline),
+        budget - spent,
+        delay_seconds,
+    )
 
 
 def main() -> None:

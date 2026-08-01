@@ -144,17 +144,44 @@ LINEUPS_RESPONSES = {
     ],
 }
 
+def _event(elapsed, extra, team, event_type, detail, player, assist=(None, None)):
+    return {
+        "time": {"elapsed": elapsed, "extra": extra},
+        "team": {"id": team[0], "name": team[1], "logo": f"https://example/{team[0]}.png"},
+        "player": {"id": player[0], "name": player[1]},
+        "assist": {"id": assist[0], "name": assist[1]},
+        "type": event_type,
+        "detail": detail,
+        "comments": None,
+    }
+
+EVENTS_RESPONSES = {
+    1001: [
+        _event(25, None, (25, "Germany"), "Goal", "Normal Goal", (101, "Player 101")),
+        # player = the one going off, assist = the one coming on
+        _event(46, None, (25, "Germany"), "subst", "Substitution 1",
+               (102, "Player 102"), (103, "Player 103")),
+        _event(90, 3, (26, "Scotland"), "subst", "Substitution 1",
+               (201, "Player 201"), (203, "Player 203")),
+    ],
+    1002: [
+        _event(60, None, (27, "Japan"), "Card", "Yellow Card", (301, "Player 301")),
+    ],
+}
+
 
 class FakeClient:
     """Duck-typed stand-in for ApiFootballClient. Never touches the network."""
 
     def __init__(self, teams=None, standings=None, fixtures=None, lineups=None,
-                 lineup_errors=None):
+                 lineup_errors=None, events=None, event_errors=None):
         self.teams = teams if teams is not None else TEAMS_RESPONSE
         self.standings = standings if standings is not None else STANDINGS_RESPONSE
         self.fixtures = fixtures if fixtures is not None else FIXTURES_RESPONSE
         self.lineups = lineups if lineups is not None else LINEUPS_RESPONSES
         self.lineup_errors = lineup_errors or {}
+        self.events = events if events is not None else EVENTS_RESPONSES
+        self.event_errors = event_errors or {}
         self.calls = []
 
     def get(self, path, params=None):
@@ -170,10 +197,18 @@ class FakeClient:
             if fixture_id in self.lineup_errors:
                 raise self.lineup_errors[fixture_id]
             return self.lineups[fixture_id]
+        if path == "/fixtures/events":
+            fixture_id = params["fixture"]
+            if fixture_id in self.event_errors:
+                raise self.event_errors[fixture_id]
+            return self.events[fixture_id]
         raise AssertionError(f"FakeClient got unexpected path: {path}")
 
     def lineup_call_count(self):
         return sum(1 for path, _ in self.calls if path == "/fixtures/lineups")
+
+    def event_call_count(self):
+        return sum(1 for path, _ in self.calls if path == "/fixtures/events")
 
 
 @pytest.fixture

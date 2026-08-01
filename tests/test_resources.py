@@ -1,7 +1,7 @@
 import requests
 
 from ingestion.football.client import ApiFootballError, RateLimitError
-from ingestion.football.resources import fixtures, lineups, standings, teams
+from ingestion.football.resources import events, fixtures, lineups, standings, teams
 from tests.conftest import FakeClient, table_counts
 
 
@@ -130,6 +130,44 @@ def test_lineups_rate_limit_stops_the_loop(duckdb_pipeline):
     client = FakeClient(lineup_errors={1001: RateLimitError("daily limit")})
     duckdb_pipeline.run(lineups(client, [1001, 1002], delay_seconds=0))
     assert client.lineup_call_count() == 1  # broke out, never tried 1002
+
+
+def test_events_rows_have_injected_fixture_id_and_minutes(fake_client, duckdb_pipeline):
+    duckdb_pipeline.run(events(fake_client, [1001, 1002], delay_seconds=0))
+    with duckdb_pipeline.sql_client() as client:
+        qualified = client.make_qualified_table_name("events")
+        rows = client.execute_sql(
+            f"SELECT fixture_id, time__elapsed, time__extra, type, "
+            f"player__name, assist__name FROM {qualified} "
+            f"WHERE type = 'subst' ORDER BY fixture_id, time__elapsed"
+        )
+    # player = off, assist = on; stoppage-time subs carry time__extra
+    assert rows == [
+        (1001, 46, None, "subst", "Player 102", "Player 103"),
+        (1001, 90, 3, "subst", "Player 201", "Player 203"),
+    ]
+
+
+def test_events_merge_idempotency(fake_client, duckdb_pipeline):
+    duckdb_pipeline.run(events(fake_client, [1001, 1002], delay_seconds=0))
+    duckdb_pipeline.run(events(FakeClient(), [1001, 1002], delay_seconds=0))
+    assert table_counts(duckdb_pipeline, "events")["events"] == 4
+
+
+def test_events_skips_failed_fixture_and_continues(duckdb_pipeline):
+    client = FakeClient(event_errors={1001: ApiFootballError("boom")})
+    duckdb_pipeline.run(events(client, [1001, 1002], delay_seconds=0))
+    assert client.event_call_count() == 2
+    with duckdb_pipeline.sql_client() as sql:
+        qualified = sql.make_qualified_table_name("events")
+        rows = sql.execute_sql(f"SELECT DISTINCT fixture_id FROM {qualified}")
+    assert rows == [(1002,)]
+
+
+def test_events_rate_limit_stops_the_loop(duckdb_pipeline):
+    client = FakeClient(event_errors={1001: RateLimitError("daily limit")})
+    duckdb_pipeline.run(events(client, [1001, 1002], delay_seconds=0))
+    assert client.event_call_count() == 1  # broke out, never tried 1002
 
 
 def test_lineups_retries_once_on_429_with_retry_after(duckdb_pipeline, monkeypatch):
