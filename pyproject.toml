@@ -6,13 +6,19 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "dlt[postgres]>=1.29.1",
+    "mwparserfromhell>=0.7.2",
+    "numpy>=2.5.1",
+    "onnxruntime>=1.28.0",
+    "psycopg[binary]>=3.3.4",
     "python-dotenv>=1.2.2",
     "requests>=2.34.2",
+    "tokenizers>=0.23.1",
 ]
 
 [dependency-groups]
 dev = [
     "dlt[duckdb]>=1.29.1",
+    "huggingface-hub>=1.26.0",
     "pytest>=9.1.1",
 ]
 

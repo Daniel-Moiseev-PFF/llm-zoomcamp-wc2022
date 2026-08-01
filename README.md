@@ -1,6 +1,6 @@
 # World Cup 2026 — LLM Knowledge Base
 
-A question-answering system over everything that happened at the 2026 FIFA World Cup — from hard facts (*who advanced to the quarter-finals?*) to open-ended, narrative questions (*what was the biggest scandal involving Switzerland?*).
+A question-answering system over everything that happened at the 2022 FIFA World Cup — from hard facts (*who advanced to the quarter-finals?*) to open-ended, narrative questions (*what was the biggest scandal involving Switzerland?*).
 
 It combines a **relational database** (structured match data), a **vector index** (tournament prose), and an **agent** that routes each question to the right source — or both.
 
