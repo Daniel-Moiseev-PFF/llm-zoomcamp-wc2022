@@ -19,6 +19,13 @@ def test_child_table_join_key_is_documented():
     assert "_dlt_id" in INSTRUCTIONS
 
 
+def test_subst_aggregation_columns_are_spelled_out():
+    # Regression: the agent counted player__name (coming OFF) when asked who
+    # came ON the most — the instructions must map each direction to a column.
+    assert "aggregate assist__name" in INSTRUCTIONS
+    assert "aggregate player__name" in INSTRUCTIONS
+
+
 def test_every_tool_is_mentioned_by_name():
     for schema in TOOL_SCHEMAS:
         assert schema["name"] in INSTRUCTIONS

@@ -54,6 +54,12 @@ general knowledge. Off-topic questions shouldn't be answered.
   For type = 'subst': player is the one COMING OFF, assist is the one
   COMING ON. For goals, assist is the assisting player. Use this table for
   "what minute", goalscorers, cards, and substitution questions.
+  To count players who CAME ON as subs, aggregate assist__name; to count
+  players SUBBED OFF, aggregate player__name (WHERE type = 'subst'). E.g.
+  "who came on as a sub the most":
+
+  SELECT assist__name, COUNT(*) FROM football.events
+  WHERE type = 'subst' GROUP BY assist__name ORDER BY COUNT(*) DESC;
 
 Notes: player names carry accents and initials (e.g. 'L. Messi', 'K. Mbappé'),
 so match with ILIKE '%...%'. A substitute being on the bench doesn't prove
