@@ -90,7 +90,8 @@ dlt REST-API pipeline → Postgres
 
 ## Interface
 
-A simple **Streamlit** chat app (`uv run streamlit run app/main.py`). Each answer
+A simple **Streamlit** chat app, served by `docker compose up` at
+http://localhost:8501. Each answer
 carries a 👍 / 👎 feedback control, and every interaction is logged to Postgres
 for the monitoring dashboard.
 
@@ -130,16 +131,67 @@ below, and the generated results in [docs/evaluation-results.md](docs/evaluation
 
 ## Setup
 
-`docker compose up -d` runs Postgres (with `pgvector`) and Grafana. The
-Streamlit app and the ingestion pipelines run on the host via `uv run`, because
-they need the ONNX embedding model in `models/`, which is not committed —
-`uv run python scripts/download_model.py` fetches it once.
+```bash
+cp .env.example .env     # POSTGRES_* are already filled in
+# add your OPENAI_API_KEY
+docker compose up -d
+```
 
-Required in `.env`: `FOOTBALL_API_KEY`, `OPENAI_API_KEY`, `POSTGRES_USER`,
-`POSTGRES_PASSWORD`, `POSTGRES_DB`. Optional: `POSTGRES_HOST`, `POSTGRES_PORT`,
-`MAX_REQUESTS_PER_RUN`, `OPENAI_MODEL`, `OPENAI_JUDGE_MODEL`.
+That is the whole thing. Chat at http://localhost:8501, dashboard at
+http://localhost:3000 (admin / admin).
 
-> **TODO** — pinned dependency versions.
+**No football API key is needed.** The knowledge base ships pre-loaded:
+`data/kb.sql.gz` (614 KB) is restored automatically the first time Postgres
+starts on an empty volume. Rebuilding it from the live API would cost ~131
+requests against a free-tier cap of 100/day — two days — which is why it ships
+as data. `FOOTBALL_API_KEY` matters only if you want to re-run the structured
+ingestion yourself (see [Rebuilding from source](#rebuilding-from-source)).
+
+The dashboard is populated on first boot too, by a one-shot `seed` service that
+fabricates back-dated traffic. It makes no LLM calls, and its rows are marked
+`[seed]`.
+
+If a port is already taken — a local Postgres on 5432 is the usual culprit —
+set `POSTGRES_PORT`, `GRAFANA_PORT` or `APP_PORT` in `.env`.
+
+### Dependency versions
+
+`uv.lock` is committed and pins every transitive dependency exactly; the image
+installs with `uv sync --frozen`, which fails rather than re-resolving if the
+lockfile and `pyproject.toml` disagree. The `>=` floors in `pyproject.toml` are
+the supported range, not the pin.
+
+### Running on the host instead
+
+The pipelines and the app still run under `uv run` against the published
+Postgres port. That path needs the ONNX embedding model, which is not committed:
+`uv run python scripts/download_model.py` fetches it once into `models/`. The
+container downloads its own copy at build time.
+
+### Rebuilding from source
+
+Two profiles, off by default, so nothing expensive runs on a plain `up`:
+
+```bash
+docker compose --profile ingest run --rm ingest-prose        # free (Wikipedia only)
+docker compose --profile ingest run --rm ingest-football     # needs FOOTBALL_API_KEY; 2 days under the free cap
+docker compose --profile eval   run --rm eval-retrieval      # free, deterministic
+docker compose --profile eval   run --rm eval-answers        # ~$0.13 of OpenAI; resumable
+```
+
+Every service shares one image, so anything else runs the same way:
+
+```bash
+docker compose run --rm app python -m agent.cli "Who won the final?"
+docker compose run --rm app python -m evaluation.report
+```
+
+After a deliberate rebuild, regenerate the committed dump with
+`./scripts/dump_kb.sh`. This matters after any change to chunking or the
+embedding model: the dump carries **derived embeddings**, so a stale one would
+restore cleanly while describing a corpus that no longer exists. A test asserts
+the dump's vector dimension still matches `EMBEDDING_DIM`, which catches a model
+swap but not a re-chunk.
 
 ---
 
@@ -155,15 +207,20 @@ endpoints. Events carry the minute (`time__elapsed`) for goals, cards, and
 substitutions; in `subst` rows, `player` is the one coming off and `assist` the one
 coming on.
 
+> You do not need to run this to use the project — the loaded data ships in
+> `data/kb.sql.gz` and restores automatically. This section is for rebuilding it
+> from the live API, which needs a key and takes two days under the free cap.
+
 ```bash
-docker compose up -d                              # start Postgres
-uv run python -m ingestion.football.pipeline      # run the pipeline (re-runnable)
+docker compose --profile ingest run --rm ingest-football   # containerized
+uv run python -m ingestion.football.pipeline               # or on the host
 uv run pytest                                     # tests (never hit the live API)
 uv run python scripts/smoke_test.py               # MANUAL: 1 real API call to /status
 ```
 
 Required in `.env`: `FOOTBALL_API_KEY`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
 `POSTGRES_DB` (optional: `POSTGRES_HOST`, `POSTGRES_PORT`, `MAX_REQUESTS_PER_RUN`).
+Re-run `./scripts/dump_kb.sh` afterwards to refresh the committed dump.
 
 ## Ingestion (Wikipedia → pgvector)
 
@@ -174,15 +231,20 @@ teams it mentions, embeds with `all-MiniLM-L6-v2` (ONNX, 384-dim), and writes to
 quotas involved. Embedding code follows the llm-zoomcamp course (ONNX Runtime
 instead of PyTorch).
 
+> Also not needed for a normal run — the embedded chunks ship in the dump. This
+> one is free to re-run, though: Wikipedia needs no key and no quota.
+
 ```bash
-uv run python scripts/download_model.py           # one-time: fetch the ONNX model
+docker compose --profile ingest run --rm ingest-prose      # containerized
+uv run python scripts/download_model.py           # host only: fetch the ONNX model
 uv run python -m ingestion.prose.pipeline         # fetch + chunk + embed + load
 uv run python -m ingestion.prose.search "Who scored in the final?"          # smoke search
 uv run python -m ingestion.prose.search "biggest scandal?" Switzerland      # team-filtered
 ```
 
 Requires the structured pipeline to have run first (`football.teams` powers the
-team tagging).
+team tagging). Re-run `./scripts/dump_kb.sh` afterwards — a re-chunk changes
+every embedding, and the committed dump would otherwise be stale.
 
 ## Agent (CLI chat)
 
@@ -216,7 +278,8 @@ verdict goes to `monitoring.feedback`. Logging follows the llm-zoomcamp
 monitoring module; tables are created idempotently on first launch.
 
 ```bash
-uv run streamlit run app/main.py                  # chat at http://localhost:8501
+docker compose up -d                              # chat at http://localhost:8501
+uv run streamlit run app/main.py                  # or on the host
 uv run python -m monitoring.db                    # optional: init tables standalone
 ```
 
@@ -273,8 +336,15 @@ than clicked together in the UI as the course does, so `docker compose up`
 yields a working dashboard with nothing to configure. The datasource takes its
 credentials from the environment, so no password is committed.
 
+Seeding happens automatically: a one-shot `seed` service runs on every
+`docker compose up`, purging and re-seeding so a repeated `up` does not stack
+duplicate rows. The rows cannot simply ship inside `data/kb.sql.gz` because they
+are back-dated relative to *now* — a dump of them would render an empty
+dashboard within a day, since the panels default to a `now-6h` window.
+
+To drive it by hand:
+
 ```bash
-docker compose up -d                              # Postgres + Grafana
 uv run python -m monitoring.seed --hours 6 --count 150   # fabricated back-dated traffic
 uv run python -m monitoring.seed --purge          # remove it again
 ```
