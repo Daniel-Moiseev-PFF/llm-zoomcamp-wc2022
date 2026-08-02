@@ -58,12 +58,25 @@ def search_lexical(query, conn, k=5, team=None) -> list[dict]:
     """Postgres full-text search — the keyword baseline the vector arm has to beat.
 
     Needs no embedder, which is most of the point: it is the cheap arm.
+
+    The `&` -> `|` rewrite is what makes this a ranker rather than a filter.
+    plainto_tsquery ANDs every lexeme, so a question phrased as a sentence only
+    matches a chunk containing all of its content words — measured against this
+    corpus, "What was the biggest controversy about migrant workers?" returns 0
+    rows under AND and 42 under OR. plainto_tsquery still does the parsing,
+    stemming and stopword removal; only the operator changes, and ts_rank_cd
+    then sorts by how much of the query each chunk actually covers.
     """
     sql = """
+        WITH q AS (
+            SELECT replace(
+                plainto_tsquery('english', %(q)s)::text, ' & ', ' | '
+            )::tsquery AS query
+        )
         SELECT article, section, chunk_index, content, teams_mentioned,
-               ts_rank_cd(content_tsv, plainto_tsquery('english', %(q)s)) AS rank
-        FROM prose.chunks
-        WHERE content_tsv @@ plainto_tsquery('english', %(q)s)
+               ts_rank_cd(content_tsv, q.query) AS rank
+        FROM prose.chunks, q
+        WHERE content_tsv @@ q.query
     """
     params = {"q": query, "k": k}
     if team:

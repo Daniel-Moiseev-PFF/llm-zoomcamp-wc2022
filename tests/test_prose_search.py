@@ -147,9 +147,20 @@ def test_lexical_arm_ranks_with_full_text_search():
     conn = FakeConnection([ROW])
     search_lexical(QUERY, conn)
     sql, params = conn.calls[0]
-    assert "content_tsv @@ plainto_tsquery('english', %(q)s)" in sql
+    assert "plainto_tsquery('english', %(q)s)" in sql
     assert "ts_rank_cd" in sql
     assert params["q"] == QUERY
+
+
+def test_lexical_arm_matches_any_query_term_rather_than_all_of_them():
+    # plainto_tsquery ANDs every lexeme, which turns the arm into a filter: a
+    # question phrased as a sentence matches only chunks containing all of its
+    # content words, and most real questions return nothing at all. Rewriting
+    # the operator makes it rank instead.
+    conn = FakeConnection([ROW])
+    search_lexical(QUERY, conn)
+    sql, _ = conn.calls[0]
+    assert "' & ', ' | '" in sql
 
 
 def test_every_arm_parameterises_the_user_query():
