@@ -1,0 +1,15 @@
+# models/ is the important one: 87 MB of host model would be sent to the daemon
+# on every build, and the image downloads its own copy in the builder stage.
+.git/
+.venv/
+models/
+__pycache__/
+.pytest_cache/
+.dlt/
+.worktrees/
+*.duckdb
+.env
+data/
+docs/
+tests/
+grafana/
