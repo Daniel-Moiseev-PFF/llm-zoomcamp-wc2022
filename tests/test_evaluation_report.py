@@ -3,9 +3,19 @@ import csv
 from evaluation.report import (
     answer_winner,
     load_csv,
+    outcome,
     render,
     retrieval_winner,
+    shipped_variant,
+    unanimous_failures,
 )
+
+VERDICTS = [
+    {"id": "s1", "question": "who won?", "variant": "full", "verdict": "CORRECT"},
+    {"id": "s1", "question": "who won?", "variant": "lean", "verdict": "INCORRECT"},
+    {"id": "s3", "question": "top scorer?", "variant": "full", "verdict": "INCORRECT"},
+    {"id": "s3", "question": "top scorer?", "variant": "lean", "verdict": "PARTLY_CORRECT"},
+]
 
 RETRIEVAL = [
     {"arm": "lexical", "rrf_k": "", "hit_rate": 0.60, "mrr": 0.44, "questions": "600"},
@@ -95,6 +105,36 @@ def test_the_report_states_both_caveats():
 
 def test_the_report_says_it_is_generated():
     assert "evaluation/report.py" in render(RETRIEVAL, ANSWERS)
+
+
+def test_a_question_one_variant_got_right_is_not_a_unanimous_failure():
+    assert [f["id"] for f in unanimous_failures(VERDICTS)] == ["s3"]
+
+
+def test_the_failures_section_names_the_question_not_just_its_id():
+    report = render(RETRIEVAL, ANSWERS, VERDICTS)
+    assert "top scorer?" in report
+    assert "who won?" not in report  # one variant got it right
+
+
+def test_the_report_still_renders_without_verdicts():
+    # The two metric CSVs are the report's real inputs; verdicts only add detail.
+    assert "Offline evaluation results" in render(RETRIEVAL, ANSWERS)
+
+
+def test_a_winner_that_was_already_shipped_is_reported_as_no_change():
+    # The rubric asks that the best approach be used. Claiming a change that
+    # never happened would be the easiest way to fake that.
+    assert "nothing changed" in outcome("vector", "vector", "DEFAULT_ARM")
+    assert "already held" in outcome("vector", "vector", "DEFAULT_ARM")
+
+    changed = outcome("hybrid", "vector", "DEFAULT_ARM")
+    assert "default" in changed and "replacing vector" in changed
+    assert "nothing changed" not in changed
+
+
+def test_the_shipped_variant_is_the_agents_own_instructions():
+    assert shipped_variant() == "full"
 
 
 def test_load_csv_coerces_the_numeric_columns(tmp_path):

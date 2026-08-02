@@ -110,10 +110,21 @@ Built — see [Monitoring (judge + Grafana)](#monitoring-judge--grafana) below.
 
 ## Evaluation
 
-> **TODO** — offline evaluation (distinct from monitoring above):
-> - **Retrieval:** compare lexical vs. vector vs. hybrid (Hit Rate, MRR); best one is used
-> - **Answer quality:** LLM-as-judge across multiple prompt variants — reusing
->   `monitoring/llm.py` and the verdict model from `monitoring/judge.py`
+Offline evaluation against a fixed, committed dataset — distinct from the
+monitoring above, which scores live traffic:
+
+- **Retrieval:** lexical vs. vector vs. hybrid scored on Hit Rate and MRR; the
+  winner becomes `DEFAULT_ARM`
+- **Answer quality:** three agent prompt variants scored by a reference-aware
+  LLM-as-judge; the winner becomes `agent/instructions.py`
+
+Both reuse `monitoring/llm.py`'s transport. The offline judge defines its own
+labels rather than reusing `RelevanceVerdict` — relevance and correctness are
+different questions, and sharing the model would make two incomparable numbers
+look comparable.
+
+Built — see [Evaluation (retrieval arms + prompt variants)](#evaluation-retrieval-arms--prompt-variants)
+below, and the generated results in [docs/evaluation-results.md](docs/evaluation-results.md).
 
 ---
 
@@ -273,3 +284,73 @@ script makes no LLM calls; it fabricates conversations and feedback spread over
 the last few hours so a fresh dashboard opens on a full time axis. Seeded
 questions are prefixed `[seed]` so they are obvious in the table panel and can
 be purged cleanly.
+
+## Evaluation (retrieval arms + prompt variants)
+
+Two independent comparisons, each ending in a change to the running system.
+Results — including both full tables and the caveats — are generated into
+[docs/evaluation-results.md](docs/evaluation-results.md); it is written by
+`evaluation/report.py` and should never be edited by hand.
+
+### Retrieval — which arm the agent searches with
+
+`ingestion/prose/search.py` holds three arms over the same 208 chunks:
+
+| arm | how it ranks |
+|---|---|
+| `search_vector` | pgvector cosine over the 384-dim embeddings |
+| `search_lexical` | Postgres full-text search, `ts_rank_cd` over a generated `content_tsv` column (section weighted `A`, body `B`) |
+| `search_hybrid` | both, fused with Reciprocal Rank Fusion |
+
+`search()` delegates to whichever arm `DEFAULT_ARM` names, so adopting a winner
+is a one-line change and `agent/tools.py` never has to know.
+
+Ground truth is synthetic: `evaluation/ground_truth.py` asks the model for
+questions each chunk would answer, so that chunk is by construction the gold
+document. Rows are keyed on `(article, section, chunk_index)` rather than
+`chunks.id`, because the prose pipeline drops and recreates the table on every
+run and the `SERIAL` is reassigned — a CSV keyed on it would silently start
+scoring against different chunks.
+
+One non-obvious detail in the lexical arm: `plainto_tsquery` ANDs every lexeme,
+so a question phrased as a sentence matches only chunks containing all of its
+content words. Measured on this corpus, *"What was the biggest controversy about
+migrant workers?"* returns 0 rows under AND and 42 under OR. The arm rewrites
+the operator to `|`, which turns it from a filter into a ranker.
+
+```bash
+uv run python -m ingestion.prose.pipeline          # builds content_tsv + the GIN index
+uv run python -m evaluation.ground_truth           # ~208 LLM calls, writes the CSV
+uv run python -m evaluation.retrieval --k 5 --candidates 20
+```
+
+### Answer quality — which prompt the agent runs
+
+`evaluation/variants.py` holds three developer prompts: **full** (the shipped
+one, imported rather than copied so it cannot drift), **lean** (routing rules
+and a bare schema, no coaching), and **guided** (full plus worked routing traces
+for mixed questions). `run_agent_loop` takes an `instructions=` parameter so the
+same agent, tools and model run under each.
+
+Answers are scored against ~30 hand-written references in
+`evaluation/data/answer-ground-truth.csv` by `evaluation/judge_offline.py`,
+following the course's A→Q→A' judge. Two things it does differently from the
+online judge in `monitoring/judge.py`:
+
+- it sees a **reference answer**, so it scores correctness rather than relevance,
+  with its own `CORRECT` / `PARTLY_CORRECT` / `INCORRECT` labels;
+- for the off-topic rows the reference *is* "the system should decline", so a
+  correct refusal scores CORRECT — the opposite of the online judge, where
+  declining is always NON_RELEVANT.
+
+A verdict the judge cannot produce after retries is recorded as `MISSING` and
+stays in the denominator, so a variant cannot look better by failing to be
+scored. The runner is resumable: a `(variant, id)` pair already in
+`answer-runs.csv` is skipped, and a failed run leaves no row so it is retried.
+
+```bash
+uv run python -m evaluation.answers                # 3 variants x 30 questions, resumable
+uv run python -m evaluation.answers --variant lean # or one at a time
+uv run python -m evaluation.judge_offline          # score them
+uv run python -m evaluation.report                 # render docs/evaluation-results.md
+```

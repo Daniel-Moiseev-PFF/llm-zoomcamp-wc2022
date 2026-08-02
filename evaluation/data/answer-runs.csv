@@ -1,0 +1,391 @@
+variant,id,question,expected_path,actual_path,answer,prompt_tokens,completion_tokens,total_tokens,cost,response_time,iterations,tool_calls
+full,m1,"What was the score when Argentina lost in the group stage, and how big an upset was that considered?",mixed,prose-only,"Argentina lost 2–1 to Saudi Arabia in the group stage.
+
+It was considered one of the biggest upsets in World Cup history.",5089,69,5158,0.00080475,2.501,2,"[""search_prose""]"
+full,m2,"In what minutes did Japan score against Spain, and what was controversial about the winning goal?",mixed,mixed,"Japan scored in the 48th and 51st minutes against Spain.
+
+The winning goal by Ao Tanaka was controversial because the ball appeared to have gone out of play before it was sent back into the net. After a long VAR review, the goal was awarded, and later images suggested the ball had not fully crossed the line by the narrowest of margins.",7252,248,7500,0.0012365999999999998,3.116,3,"[""execute_sql"", ""search_prose""]"
+full,m3,"Who refereed the final, and were there any officiating controversies at the tournament?",mixed,mixed,"The final was refereed by **Szymon Marciniak**.
+
+Yes — there were some officiating controversies at the tournament. The biggest one highlighted in the sources was the **Argentina vs Netherlands quarter-final**, where referee **Antonio Mateu Lahoz** was criticized for **failing to control the match** and for the large number of yellow cards issued.
+
+There were also broader tournament controversies around **FIFA’s officiating decisions**, including the use of **women referees for the first time at a men’s World Cup** and a **last-minute disciplinary decision over rainbow armbands**.",4485,243,4728,0.0008185499999999999,2.483,2,"[""execute_sql"", ""search_prose""]"
+full,m4,"How many goals did Mbappe score in the final and in what minutes, and how was his performance written about afterwards?",mixed,mixed,"Mbappé scored 4 goals in the final, in the 80th minute, 81st minute, 118th minute, and 120+1 minute.
+
+Afterwards, he was written about as having produced a remarkable but ultimately unsuccessful performance: France were said to have been “suddenly caught out” by his two goals in two minutes, and although he became the first player since Geoff Hurst to score a hat-trick in a World Cup final, France still lost on penalties. The write-up also noted that he became the first player to score four World Cup final goals and the first to reach eight goals in a single World Cup since Ronaldo in 2002.",8054,358,8412,0.0014229,5.542,3,"[""execute_sql"", ""search_prose"", ""execute_sql""]"
+full,m5,"Which teams played the opening match and what was the score, and what happened at the opening ceremony?",mixed,mixed,"The opening match was **Qatar vs Ecuador**, and **Ecuador won 2–0**.
+
+At the opening ceremony, held at **Al Bayt Stadium** before that match:
+- **Morgan Freeman** and **Ghanim Al-Muftah** appeared
+- **Jungkook** of BTS and **Fahad Al Kubaisi** performed
+- it was the **first World Cup opening ceremony to include a Qur’an recitation**
+- **Emir Tamim bin Hamad Al Thani declared the tournament open**",7670,307,7977,0.0013347,3.491,3,"[""execute_sql"", ""search_prose"", ""execute_sql""]"
+full,m6,"Which team did Morocco knock out in the quarter-finals, and what was historic about their run?",mixed,mixed,"Morocco knocked out **Portugal** in the quarter-finals.
+
+Their run was historic because Morocco became the **first African and first Arab team to reach the World Cup semi-finals**.",4848,177,5025,0.0008334,2.365,2,"[""execute_sql"", ""search_prose""]"
+full,m7,"Who finished top of Iran's group, and what protests surrounded the Iranian team?",mixed,mixed,"England finished top of Iran’s group.
+
+The protests surrounding the Iranian team included:
+- anti-government “Woman, Life, Freedom” demonstrations linked to the Mahsa Amini protests
+- fans wearing or carrying banned symbols, such as the pre-revolutionary Lion and Sun flag and signs mentioning Mahsa Amini
+- reports that Iranian players refused to sing the national anthem before their first match in solidarity with the protests
+- stadium and police attempts to suppress protest signs, filming, and photography
+- boycotts and counter-support from both protesters and pro-government supporters
+
+",6909,219,7128,0.00116775,3.204,3,"[""execute_sql"", ""search_prose""]"
+full,m8,"What was the score in the third-place match, and what was notable about the two teams' finishes?",mixed,sql-only,"The third-place match ended **Croatia 2–1 Morocco**.
+
+Notable about the teams’ finishes:
+- **Croatia finished third**.
+- **Morocco finished fourth**, which was still a historic run for them.",7361,298,7659,0.0012829499999999997,4.078,4,"[""execute_sql"", ""execute_sql"", ""execute_sql""]"
+full,s1,Who won the 2022 World Cup final and what was the score?,sql-only,sql-only,"Argentina won the 2022 World Cup final, defeating France on penalties after a 3–3 draw. The penalty shootout was 4–2.",4787,168,4955,0.0008188499999999999,2.604,3,"[""execute_sql"", ""execute_sql""]"
+full,s2,Which stadium hosted the final?,sql-only,sql-only,The final was hosted at **Lusail Iconic Stadium** in **Lusail**.,2971,65,3036,0.00048465,1.752,2,"[""execute_sql""]"
+full,s3,Who was the top scorer of the tournament and how many goals did he score?,sql-only,sql-only,"The tournament’s top scorers were **K. Mbappé** and **L. Messi**, tied with **9 goals each**.",3157,97,3254,0.00053175,1.743,2,"[""execute_sql""]"
+full,s4,Which team picked up the most yellow cards?,sql-only,sql-only,"Argentina picked up the most yellow cards, with 17.",2991,83,3074,0.00049845,1.664,2,"[""execute_sql""]"
+full,s5,Which teams conceded only one goal in the group stage?,sql-only,sql-only,"The teams that conceded only one goal in the group stage were:
+
+- Brazil
+- Croatia
+- Morocco
+- Netherlands
+- Tunisia
+- USA",3048,86,3134,0.0005088,1.66,2,"[""execute_sql""]"
+full,s6,"What formations did Argentina and France line up in for the final, and who were the coaches?",sql-only,sql-only,"In the final, Argentina lined up in a 4-3-3 under coach L. Scaloni, and France lined up in a 4-2-3-1 under coach D. Deschamps.",3203,193,3396,0.00059625,2.01,2,"[""execute_sql"", ""execute_sql""]"
+full,s7,"How many matches were decided by a penalty shootout, and which ones?",sql-only,sql-only,"There were **5 matches** decided by a penalty shootout:
+
+1. **Japan vs Croatia** — Round of 16  
+   - 1–1 after extra time, **Croatia won 3–1 on penalties**
+
+2. **Morocco vs Spain** — Round of 16  
+   - 0–0 after extra time, **Morocco won 3–0 on penalties**
+
+3. **Croatia vs Brazil** — Quarter-finals  
+   - 1–1 after extra time, **Croatia won 4–2 on penalties**
+
+4. **Netherlands vs Argentina** — Quarter-finals  
+   - 2–2 after extra time, **Argentina won 4–3 on penalties**
+
+5. **Argentina vs France** — Final  
+   - 3–3 after extra time, **Argentina won 4–2 on penalties**",3371,281,3652,0.00067425,2.414,2,"[""execute_sql""]"
+full,s8,Who finished top of Morocco's group and how many points did they get?,sql-only,sql-only,Morocco finished top of Group F with 7 points.,3038,60,3098,0.0004917,1.736,2,"[""execute_sql""]"
+full,s9,Which referees officiated the most matches at the tournament?,sql-only,sql-only,"The referees who officiated the most matches at the 2022 World Cup were:
+
+- C. Ramos — 4 matches
+- Wilton Pereira Sampaio — 4 matches
+
+Next highest were several referees with 3 matches each, including Antonio Mateu, C. Turpin, D. Orsato, F. Rapallini, F. Tello, I. Elfath, Ivan Cisneros, and M. Oliver.",3137,167,3304,0.00057075,1.931,2,"[""execute_sql""]"
+full,s10,Who scored Argentina's goals in the final and in what minutes?,sql-only,sql-only,"Argentina’s goals in the final were scored by:
+
+- L. Messi — 23' and 108'
+- Á. Di María — 36'
+- L. Messi — 120'+2'  
+- P. Dybala, L. Paredes, and G. Montiel also scored in the penalty shootout, if you want those included.
+
+If you mean only goals in regular/opening play plus extra time, then it was Messi and Di María.",3237,241,3478,0.00063015,2.471,2,"[""execute_sql""]"
+full,p1,"Who won the Golden Ball at the 2022 World Cup, and what was notable about it?",prose-only,prose-only,"Lionel Messi won the 2022 World Cup Golden Ball.
+
+What was notable: he became the first player to win the Golden Ball twice, having also won it in 2014.",5944,120,6064,0.0009636,1.962,2,"[""search_prose"", ""search_prose""]"
+full,p2,Which goal was voted the best of the tournament?,prose-only,prose-only,The best goal of the tournament was Richarlison’s second goal for Brazil against Serbia in the group stage.,4130,71,4201,0.0006621,1.772,2,"[""search_prose""]"
+full,p3,"How much did the 2022 World Cup cost, and was that figure disputed?",prose-only,prose-only,"The 2022 World Cup was estimated to cost **over US$220 billion**.
+
+Yes, that figure was **disputed**. The prose source says Qatari officials, including organising CEO **Nasser Al Khater**, disputed the $220 billion estimate and said the **true cost was $8 billion**.",6440,153,6593,0.0010578,2.218,2,"[""search_prose"", ""search_prose""]"
+full,p4,Were there any female referees at the 2022 World Cup?,prose-only,prose-only,"Yes. FIFA included female officials at the 2022 World Cup.
+
+- **Female referees:** Stéphanie Frappart (France), Salima Mukansanga (Rwanda), and Yoshimi Yamashita (Japan)
+- **Female assistant referees:** Neuza Back, Kathryn Nesbitt, and Karen Díaz Medina
+
+Frappart became the **first-ever female referee to officiate a World Cup match** when she worked **Costa Rica vs Germany** on **1 December 2022**.",4539,150,4689,0.00077085,1.97,2,"[""search_prose""]"
+full,p5,How was Qatar chosen to host the World Cup?,prose-only,prose-only,"Qatar was chosen through FIFA’s bidding process for the 2022 World Cup, but the selection was heavily contested afterward. The available sources say there were allegations of bribery and corruption involving FIFA executive-committee members and Qatar’s bid team, and that some officials later said awarding Qatar the tournament was a mistake.
+
+In short: FIFA awarded Qatar hosting rights, but the decision became controversial because of later allegations about the fairness of the bid and possible corruption.",4544,136,4680,0.0007632,2.326,2,"[""search_prose""]"
+full,p6,Who directed the opening ceremony?,prose-only,prose-only,I don’t know from the available World Cup 2022 sources who directed the opening ceremony.,4162,57,4219,0.0006585,1.519,2,"[""search_prose""]"
+full,p7,What was the design of the official tournament emblem based on?,prose-only,prose-only,"The official tournament emblem was based on a shawl and desert dunes. It was also shaped to resemble the tournament trophy, the infinity symbol, and the number 8.",4068,68,4136,0.0006509999999999999,1.681,2,"[""search_prose""]"
+full,p8,How large an audience was the 2022 World Cup expected to reach?,prose-only,prose-only,The 2022 World Cup was expected to reach a global audience of at least **5 billion** people.,4036,77,4113,0.0006516,1.759,2,"[""search_prose""]"
+full,o1,What is the capital of France?,none,none,I’m only able to answer questions about the 2022 FIFA World Cup using the provided tools.,1431,24,1455,0.00022905,0.822,1,[]
+full,o2,Write me a Python function that sorts a list of dictionaries by key.,none,none,"Sure — here’s a simple Python function that sorts a list of dictionaries by a given key:
+
+```python
+def sort_dicts_by_key(data, key, reverse=False):
+    return sorted(data, key=lambda d: d.get(key), reverse=reverse)
+```
+
+Example:
+
+```python
+items = [
+    {""name"": ""Charlie"", ""age"": 30},
+    {""name"": ""Alice"", ""age"": 25},
+    {""name"": ""Bob"", ""age"": 28}
+]
+
+sorted_items = sort_dicts_by_key(items, ""name"")
+print(sorted_items)
+```
+
+Output:
+
+```python
+[
+    {'name': 'Alice', 'age': 25},
+    {'name': 'Bob', 'age': 28},
+    {'name': 'Charlie', 'age': 30}
+]
+```
+
+If you want, I can also show:
+- sorting by nested keys
+- sorting in-place
+- handling missing keys safely",1438,198,1636,0.0003345,1.483,1,[]
+full,o3,What is the weather in Doha today?,none,none,"I don’t know — I can only answer questions about the 2022 FIFA World Cup in Qatar using the provided tools, and I don’t have a weather data source.",1432,39,1471,0.0002382,0.742,1,[]
+full,o4,Who is going to win the 2026 World Cup?,none,none,I don’t know — I can only answer questions about the 2022 FIFA World Cup using the provided tools and data.,1436,29,1465,0.00023280000000000002,0.835,1,[]
+guided,m1,"What was the score when Argentina lost in the group stage, and how big an upset was that considered?",mixed,mixed,"Argentina lost 2–1 to Saudi Arabia in the group stage.
+
+It was considered one of the biggest upsets in World Cup history.",5872,217,6089,0.001011,2.434,2,"[""execute_sql"", ""search_prose""]"
+guided,m2,"In what minutes did Japan score against Spain, and what was controversial about the winning goal?",mixed,mixed,"Japan scored in the 48th minute and the 51st minute.
+
+The winning goal by Ao Tanaka was controversial because it appeared that the ball may have gone out of play before the goal; VAR reviewed it and awarded the goal anyway.",10343,328,10671,0.00174825,3.801,3,"[""execute_sql"", ""search_prose"", ""execute_sql""]"
+guided,m3,"Who refereed the final, and were there any officiating controversies at the tournament?",mixed,mixed,"The final was refereed by **S. Marciniak**.
+
+Yes — there were several officiating-related controversies at the tournament, though the main ones highlighted in the source were broader tournament controversies rather than a single final-specific refereeing scandal. For example, there was criticism and controversy around **FIFA’s late decision to issue yellow cards for European captains’ rainbow armbands**, and the tournament overall was widely described as one of the most controversial World Cups, with criticism also focused on Qatar’s hosting, human rights record, and alleged corruption in the bidding process.",5231,223,5454,0.0009184499999999999,2.532,2,"[""execute_sql"", ""search_prose""]"
+guided,m4,"How many goals did Mbappe score in the final and in what minutes, and how was his performance written about afterwards?",mixed,mixed,"Mbappé scored 4 goals in the final.
+
+They came in the:
+- 80th minute
+- 81st minute
+- 118th minute
+- 120+1st minute
+
+Afterwards, he was written about as having produced a remarkable performance: the report says he scored two goals in two minutes to drag France back into the match, then completed a hat-trick from the spot, becoming the first player since Geoff Hurst in 1966 to score a hat-trick in a World Cup final. It also notes that he became the first player to score four World Cup final goals, and that many reporters, pundits, and fans regarded the match as the greatest World Cup final of all time.",5306,316,5622,0.0009855,3.118,2,"[""execute_sql"", ""search_prose""]"
+guided,m5,"Which teams played the opening match and what was the score, and what happened at the opening ceremony?",mixed,mixed,"The opening match was **Qatar vs Ecuador**, and Ecuador won **2–0**.
+
+At the opening ceremony, held at **Al Bayt Stadium** before that match, there were appearances by **Morgan Freeman** and **Ghanim Al-Muftah**, performances by **Jungkook of BTS** and **Fahad Al Kubaisi**, and it was also the **first time the Qur’an was recited as part of a World Cup opening ceremony**. Emir **Tamim bin Hamad Al Thani** declared the tournament open.",11859,369,12228,0.00200025,5.993,4,"[""execute_sql"", ""search_prose"", ""execute_sql"", ""execute_sql""]"
+guided,m6,"Which team did Morocco knock out in the quarter-finals, and what was historic about their run?",mixed,mixed,"Morocco knocked out Portugal in the quarter-finals, winning 1–0.
+
+What was historic: that run made Morocco the first African and first Arab nation to reach a World Cup semi-final.",8474,312,8786,0.0014583,3.46,3,"[""execute_sql"", ""search_prose"", ""execute_sql""]"
+guided,m7,"Who finished top of Iran's group, and what protests surrounded the Iranian team?",mixed,mixed,"England finished top of Iran’s group.
+
+As for the protests, the Iranian team and its supporters were surrounded by demonstrations and crackdowns tied to the Mahsa Amini protests. Reports said Iran’s team refused to sing the national anthem in solidarity, while many Iranian fans boycotted the team or used slogans like “Woman, Life, Freedom.” Stadium security and Qatari police were reported to have confiscated banners and flags, restricted dissenting symbols, and detained some protesters and journalists.",5789,213,6002,0.00099615,3.1,2,"[""execute_sql"", ""search_prose""]"
+guided,m8,"What was the score in the third-place match, and what was notable about the two teams' finishes?",mixed,mixed,"The third-place match ended Croatia 2–1 Morocco.
+
+What was notable was that Morocco had already played Croatia in their opening Group F match, which finished 0–0. Morocco’s fourth-place finish was a record for the team and the best World Cup finish by any African or Arab nation.",7690,183,7873,0.0012633,2.934,3,"[""execute_sql"", ""search_prose""]"
+guided,s1,Who won the 2022 World Cup final and what was the score?,sql-only,sql-only,"Argentina won the 2022 World Cup final. The match ended 3-3 after extra time, with Argentina marked as the winner.",5454,156,5610,0.0009117000000000001,2.366,3,"[""execute_sql"", ""execute_sql""]"
+guided,s2,Which stadium hosted the final?,sql-only,sql-only,The final was hosted at **Lusail Iconic Stadium** in **Lusail**.,3435,67,3502,0.0005554500000000001,1.361,2,"[""execute_sql""]"
+guided,s3,Who was the top scorer of the tournament and how many goals did he score?,sql-only,sql-only,The tournament’s top scorer was **K. Mbappé** and **L. Messi** — they were tied with **9 goals each**.,5850,172,6022,0.0009807000000000001,2.674,3,"[""execute_sql"", ""execute_sql""]"
+guided,s4,Which team picked up the most yellow cards?,sql-only,sql-only,"Argentina picked up the most yellow cards, with 17.",3568,83,3651,0.0005849999999999999,1.658,2,"[""execute_sql""]"
+guided,s5,Which teams conceded only one goal in the group stage?,sql-only,sql-only,"The teams that conceded only one goal in the group stage were:
+
+- Brazil
+- Croatia
+- Morocco
+- Netherlands
+- Tunisia
+- USA",3577,91,3668,0.00059115,1.755,2,"[""execute_sql""]"
+guided,s6,"What formations did Argentina and France line up in for the final, and who were the coaches?",sql-only,sql-only,"Argentina lined up in a 4-3-3 under L. Scaloni, and France lined up in a 4-2-3-1 under D. Deschamps.",3516,110,3626,0.0005934,1.719,2,"[""execute_sql""]"
+guided,s7,"How many matches were decided by a penalty shootout, and which ones?",sql-only,sql-only,"There were 5 matches decided by a penalty shootout:
+
+1. Japan vs Croatia — Round of 16  
+2. Morocco vs Spain — Round of 16  
+3. Croatia vs Brazil — Quarter-finals  
+4. Netherlands vs Argentina — Quarter-finals  
+5. Argentina vs France — Final",3835,165,4000,0.00067425,2.042,2,"[""execute_sql""]"
+guided,s8,Who finished top of Morocco's group and how many points did they get?,sql-only,sql-only,Morocco finished top of their group with 7 points.,3527,87,3614,0.00058125,1.875,2,"[""execute_sql""]"
+guided,s9,Which referees officiated the most matches at the tournament?,sql-only,sql-only,"The referees who officiated the most matches at the tournament were:
+
+- C. Ramos — 4 matches
+- Wilton Pereira Sampaio — 4 matches
+
+No other referee matched that total.",3591,109,3700,0.00060405,2.278,2,"[""execute_sql""]"
+guided,s10,Who scored Argentina's goals in the final and in what minutes?,sql-only,sql-only,"Argentina’s goals in the final were scored by:
+
+- L. Messi — 23'
+- Á. Di María — 36'
+- L. Messi — 108'
+- L. Messi — 120'+2
+- P. Dybala — 120'+4
+- L. Paredes — 120'+6
+- G. Montiel — 120'+8
+
+If you want, I can also separate these into regulation, extra time, and penalties.",3663,207,3870,0.0006736499999999998,2.364,2,"[""execute_sql""]"
+guided,p1,"Who won the Golden Ball at the 2022 World Cup, and what was notable about it?",prose-only,prose-only,"Lionel Messi won the 2022 World Cup Golden Ball. What was notable about it is that he became the first player to win the Golden Ball twice, having also won it in 2014.",4970,85,5055,0.0007965,2.006,2,"[""search_prose""]"
+guided,p2,Which goal was voted the best of the tournament?,prose-only,prose-only,The best goal of the tournament was **Richarlison’s second goal against Serbia** for Brazil.,4598,62,4660,0.0007268999999999999,2.049,2,"[""search_prose""]"
+guided,p3,"How much did the 2022 World Cup cost, and was that figure disputed?",prose-only,prose-only,"The 2022 World Cup was estimated to cost Qatar about US$220 billion. Yes, that figure was disputed: Qatari officials, including organizing CEO Nasser Al Khater, said the true cost was about US$8 billion.",6899,136,7035,0.0011164499999999997,1.861,2,"[""search_prose"", ""search_prose""]"
+guided,p4,Were there any female referees at the 2022 World Cup?,prose-only,prose-only,"Yes. FIFA included three female referees at the 2022 World Cup: Stéphanie Frappart (France), Salima Mukansanga (Rwanda), and Yoshimi Yamashita (Japan). There were also three female assistant referees: Neuza Back, Kathryn Nesbitt, and Karen Díaz Medina. Frappart became the first female referee to officiate a World Cup match, in Costa Rica vs Germany.",4934,128,5062,0.0008169,2.109,2,"[""search_prose""]"
+guided,p5,How was Qatar chosen to host the World Cup?,prose-only,prose-only,"Qatar was chosen through FIFA’s 2010 host-selection vote.
+
+Here’s the short version:
+- The bidding process began in January 2009.
+- For 2022, the remaining bidders were Australia, Japan, Qatar, South Korea, and the United States.
+- The FIFA Executive Committee, consisting of 22 members, met in Zürich on 2 December 2010 and voted to select the host.
+- Qatar won the vote.
+
+The selection was controversial: the bid was described as having “high operational risk,” and later criticism focused on alleged corruption and bribery in the bidding process.",8331,193,8524,0.0013654499999999998,2.899,3,"[""search_prose"", ""read_section""]"
+guided,p6,Who directed the opening ceremony?,prose-only,prose-only,"The opening ceremony was directed by Italian creative director Marco Balich, who collaborated with co-artistic director Ahmed Al Baker.",4535,65,4600,0.00071925,1.86,2,"[""search_prose""]"
+guided,p7,What was the design of the official tournament emblem based on?,prose-only,prose-only,"The official tournament emblem was based on a shawl and desert dunes, and it was also shaped to resemble the tournament trophy, the infinity symbol, and the number 8.",4533,72,4605,0.00072315,1.878,2,"[""search_prose""]"
+guided,p8,How large an audience was the 2022 World Cup expected to reach?,prose-only,prose-only,FIFA projected the 2022 World Cup could reach a global audience of at least 5 billion people.,4498,61,4559,0.0007113,1.808,2,"[""search_prose""]"
+guided,o1,What is the capital of France?,none,none,I can’t help with questions outside the 2022 FIFA World Cup.,1662,19,1681,0.0002607,0.771,1,[]
+guided,o2,Write me a Python function that sorts a list of dictionaries by key.,none,none,"Here’s a simple Python function to sort a list of dictionaries by a given key:
+
+```python
+def sort_dicts_by_key(items, key, reverse=False):
+    return sorted(items, key=lambda d: d.get(key), reverse=reverse)
+```
+
+Example:
+
+```python
+data = [
+    {""name"": ""Alice"", ""age"": 30},
+    {""name"": ""Bob"", ""age"": 25},
+    {""name"": ""Charlie"", ""age"": 35},
+]
+
+sorted_data = sort_dicts_by_key(data, ""age"")
+print(sorted_data)
+```
+
+Output:
+
+```python
+[{'name': 'Bob', 'age': 25}, {'name': 'Alice', 'age': 30}, {'name': 'Charlie', 'age': 35}]
+```
+
+If you want, I can also show you:
+- sorting in place,
+- sorting by nested keys,
+- or handling missing keys more safely.",1669,196,1865,0.00036794999999999997,1.415,1,[]
+guided,o3,What is the weather in Doha today?,none,none,I don’t know — I can only answer questions about the 2022 FIFA World Cup in Qatar using the provided tools.,1663,29,1692,0.00026684999999999995,0.82,1,[]
+guided,o4,Who is going to win the 2026 World Cup?,none,none,"I don’t know. I can only answer using facts from the 2022 World Cup tools, and this question is about the 2026 World Cup.",1667,36,1703,0.00027164999999999996,0.818,1,[]
+lean,m1,"What was the score when Argentina lost in the group stage, and how big an upset was that considered?",mixed,mixed,"Argentina’s group-stage loss was **2–1 to Saudi Arabia**.
+
+It was widely regarded as a major shock: the media considered it **“one of the biggest upsets in the history of the event.”**",4150,184,4334,0.0007329,2.473,2,"[""execute_sql"", ""search_prose""]"
+lean,m2,"In what minutes did Japan score against Spain, and what was controversial about the winning goal?",mixed,mixed,"Japan scored against Spain in the **11th minute** and the **51st minute**.
+
+The winning goal was controversial because **Ao Tanaka’s second goal was awarded after a VAR review**, even though the ball appeared to have gone out of play just before the cross. FIFA later said the ball had **not fully crossed the line by the narrowest margin**.",4181,227,4408,0.0007633499999999999,2.764,2,"[""execute_sql"", ""search_prose""]"
+lean,m3,"Who refereed the final, and were there any officiating controversies at the tournament?",mixed,mixed,"The final was refereed by **Szymon Marciniak**.
+
+As for officiating controversies, the tournament did have some **controversies involving FIFA decisions and discipline**, though not all were strictly refereeing errors. The most notable officiating-related issue in the sources I found was FIFA’s **last-minute decision to warn that captains wearing rainbow armbands would receive yellow cards**, which drew criticism. There were also broader tournament controversies around Qatar’s human-rights record and hosting decision, but those were not specifically refereeing controversies.
+
+If you want, I can also look for **specific match officiating disputes** during the tournament.",3143,251,3394,0.00062205,2.834,2,"[""execute_sql"", ""search_prose""]"
+lean,m4,"How many goals did Mbappe score in the final and in what minutes, and how was his performance written about afterwards?",mixed,mixed,"Kylian Mbappé scored **3 goals** in the 2022 World Cup final.
+
+**Minutes:**
+- **80th minute** — penalty to make it **2–1**
+- **81st minute** — volley to make it **2–2**
+- **118th minute** — penalty to make it **3–3**
+
+Afterwards, the match was written about as an all-time classic: the report said Mbappé became the **second player ever to score a hat-trick in a men’s World Cup final**, and that **many reporters, pundits and fans regarded it as the greatest FIFA World Cup final of all time**. It also noted that he became the **first player to score four World Cup final goals** and the **first to reach eight goals in a single World Cup since Ronaldo in 2002**.",4199,338,4537,0.00083265,2.851,2,"[""execute_sql"", ""search_prose""]"
+lean,m5,"Which teams played the opening match and what was the score, and what happened at the opening ceremony?",mixed,mixed,"The opening match was **Qatar vs Ecuador**, and **Qatar lost 0–2**.
+
+At the opening ceremony, held at **Al Bayt Stadium** before that match, there were appearances by **Morgan Freeman** and **Ghanim Al-Muftah**, performances by **Jungkook of BTS** and **Fahad Al Kubaisi**, and it was the **first time the Qur'an was recited** as part of a World Cup opening ceremony. **Emir Tamim bin Hamad Al Thani** then declared the tournament open.",3193,238,3431,0.00062175,2.56,2,"[""execute_sql"", ""search_prose""]"
+lean,m6,"Which team did Morocco knock out in the quarter-finals, and what was historic about their run?",mixed,mixed,"Morocco knocked out Portugal in the quarter-finals.
+
+Their run was historic because Morocco became the first African team, and the first Arab team, to reach the World Cup semi-finals.",5600,294,5894,0.0010164,3.366,3,"[""execute_sql"", ""search_prose"", ""execute_sql""]"
+lean,m7,"Who finished top of Iran's group, and what protests surrounded the Iranian team?",mixed,mixed,"England finished top of Iran’s group, Group B.
+
+As for the protests around the Iranian team: they were surrounded by anti-government demonstrations linked to the Mahsa Amini protests. Iranian players refused to sing the national anthem in their opening match in solidarity, while many fans protested by displaying “Woman, Life, Freedom” banners, old Iranian flags, and Mahsa Amini references. Those protests were repeatedly suppressed by stadium security and Qatari police, and there were reports of arrests, confiscated signs, and efforts by Iranian and Qatari officials to control dissent.",5210,242,5452,0.0009267,3.453,3,"[""execute_sql"", ""search_prose""]"
+lean,m8,"What was the score in the third-place match, and what was notable about the two teams' finishes?",mixed,sql-only,"The third-place match ended **Croatia 2–1 Morocco**.
+
+What was notable was that **Morocco became the first African team to finish fourth at a World Cup**, while **Croatia finished third** after also beating Morocco again following their **0–0 draw in the group stage**.",3129,285,3414,0.0006403499999999999,3.234,3,"[""execute_sql"", ""execute_sql""]"
+lean,s1,Who won the 2022 World Cup final and what was the score?,sql-only,sql-only,"Argentina won the 2022 World Cup final. The match ended 3–3 against France, and Argentina won 4–2 on penalties.",1915,132,2047,0.00036645,2.218,2,"[""execute_sql""]"
+lean,s2,Which stadium hosted the final?,sql-only,sql-only,The final was hosted at **Lusail Iconic Stadium** in **Lusail**.,1676,76,1752,0.000297,1.691,2,"[""execute_sql""]"
+lean,s3,Who was the top scorer of the tournament and how many goals did he score?,sql-only,sql-only,"The tournament’s top scorer was **Kylian Mbappé**, with **9 goals**.",1849,82,1931,0.00032654999999999994,1.883,2,"[""execute_sql""]"
+lean,s4,Which team picked up the most yellow cards?,sql-only,sql-only,"Argentina picked up the most yellow cards in the 2022 FIFA World Cup, with 17.",4635,200,4835,0.00081525,3.949,4,"[""execute_sql"", ""execute_sql"", ""execute_sql""]"
+lean,s5,Which teams conceded only one goal in the group stage?,sql-only,sql-only,"The teams that conceded only one goal in the group stage were:
+
+- Brazil
+- Croatia
+- Morocco
+- Netherlands
+- Tunisia
+- USA",1952,114,2066,0.0003612,1.764,2,"[""execute_sql""]"
+lean,s6,"What formations did Argentina and France line up in for the final, and who were the coaches?",sql-only,sql-only,"For the final:
+
+- Argentina lined up in a **4-3-3**, coached by **L. Scaloni**
+- France lined up in a **4-2-3-1**, coached by **D. Deschamps**",4790,377,5167,0.0009447,6.406,4,"[""execute_sql"", ""execute_sql"", ""execute_sql"", ""execute_sql"", ""execute_sql""]"
+lean,s7,"How many matches were decided by a penalty shootout, and which ones?",sql-only,sql-only,"There were **5 matches** decided by a penalty shootout:
+
+1. **Japan 1–1 Croatia** — Croatia won **3–1 on penalties**  
+2. **Morocco 0–0 Spain** — Morocco won **3–0 on penalties**  
+3. **Croatia 1–1 Brazil** — Croatia won **4–2 on penalties**  
+4. **Netherlands 2–2 Argentina** — Argentina won **4–3 on penalties**  
+5. **Argentina 3–3 France** — Argentina won **4–2 on penalties**",2030,226,2256,0.0004401,2.599,2,"[""execute_sql""]"
+lean,s8,Who finished top of Morocco's group and how many points did they get?,sql-only,sql-only,"Morocco finished top of their group, with 7 points.",1722,92,1814,0.0003135,1.627,2,"[""execute_sql""]"
+lean,s9,Which referees officiated the most matches at the tournament?,sql-only,sql-only,"The referees who officiated the most matches at the 2022 World Cup were:
+
+- C. Ramos — 4 matches
+- Wilton Pereira Sampaio — 4 matches
+
+Next most active were several referees with 3 matches each, including Antonio Mateu, C. Turpin, D. Orsato, F. Rapallini, F. Tello, I. Elfath, Ivan Cisneros, and M. Oliver.",1840,174,2014,0.0003804,2.128,2,"[""execute_sql""]"
+lean,s10,Who scored Argentina's goals in the final and in what minutes?,sql-only,sql-only,"Argentina’s goals in the final were scored by:
+
+- Lionel Messi — 23' (penalty)
+- Ángel Di María — 36'
+- Lionel Messi — 108'
+- Lionel Messi — 120'+2' (penalty shootout)
+
+If you want, I can also list France’s scorers or summarize the full shootout.",1982,234,2216,0.00043770000000000007,3.89,2,"[""execute_sql""]"
+lean,p1,"Who won the Golden Ball at the 2022 World Cup, and what was notable about it?",prose-only,prose-only,"Lionel Messi won the 2022 World Cup Golden Ball.
+
+What was notable: he became the first player to win the Golden Ball twice, having also won it in 2014.",3300,85,3385,0.000546,1.888,2,"[""search_prose""]"
+lean,p2,Which goal was voted the best of the tournament?,prose-only,prose-only,The best goal of the tournament was **Richarlison’s second goal against Serbia** in Brazil’s group-stage match.,2562,65,2627,0.0004233,1.974,2,"[""search_prose""]"
+lean,p3,"How much did the 2022 World Cup cost, and was that figure disputed?",prose-only,prose-only,"The 2022 World Cup was estimated to cost Qatar **over US$220 billion**.
+
+Yes, that figure was **disputed**. According to the source, Qatari officials — including organizing CEO **Nasser Al Khater** — said the **true cost was US$8 billion**, and argued that the larger figure included broader infrastructure spending since the tournament was awarded in 2010.",3211,122,3333,0.0005548500000000001,1.994,2,"[""search_prose""]"
+lean,p4,Were there any female referees at the 2022 World Cup?,prose-only,prose-only,"Yes. FIFA appointed female referees and assistant referees to the 2022 World Cup for the first time at a men’s World Cup.
+
+The female referees were:
+- Stéphanie Frappart (France)
+- Salima Mukansanga (Rwanda)
+- Yoshimi Yamashita (Japan)
+
+They were joined by female assistant referees:
+- Neuza Back
+- Kathryn Nesbitt
+- Karen Díaz Medina
+
+Frappart became the first female referee to officiate a World Cup match, in Costa Rica vs Germany on 1 December 2022.",3164,156,3320,0.0005681999999999999,1.936,2,"[""search_prose""]"
+lean,p5,How was Qatar chosen to host the World Cup?,prose-only,prose-only,"Qatar was chosen in FIFA’s host-selection vote on 2 December 2010.
+
+According to the World Cup article:
+- The bidding process for the 2018 and 2022 tournaments began in January 2009.
+- For 2022, the remaining bids were Australia, Japan, Qatar, South Korea, and the United States.
+- The 22-member FIFA Executive Committee met in Zürich to vote.
+- Qatar won the right to host the 2022 World Cup.
+
+The selection was controversial at the time, and later criticism focused on allegations of corruption and the fact that the bid was rated as having “high operational risk.”",6053,204,6257,0.00103035,3.35,3,"[""search_prose"", ""read_section""]"
+lean,p6,Who directed the opening ceremony?,prose-only,prose-only,"The opening ceremony was directed by Italian creative director **Marco Balich**, who collaborated with co-artistic director **Ahmed Al Baker**.",2864,66,2930,0.00046919999999999997,1.523,2,"[""search_prose""]"
+lean,p7,What was the design of the official tournament emblem based on?,prose-only,prose-only,"The official tournament emblem was based on a shawl and desert dunes. It was also shaped to resemble the World Cup trophy, the infinity symbol, and the number 8.",3117,79,3196,0.0005149499999999999,1.56,2,"[""search_prose""]"
+lean,p8,How large an audience was the 2022 World Cup expected to reach?,prose-only,prose-only,The 2022 World Cup was expected to reach a global audience of at least **5 billion** people.,2730,61,2791,0.0004461,1.608,2,"[""search_prose""]"
+lean,o1,What is the capital of France?,none,none,Paris.,778,6,784,0.00012029999999999998,0.817,1,[]
+lean,o2,Write me a Python function that sorts a list of dictionaries by key.,none,none,"Here’s a simple Python function to sort a list of dictionaries by a given key:
+
+```python
+def sort_dicts_by_key(data, key, reverse=False):
+    return sorted(data, key=lambda item: item.get(key), reverse=reverse)
+```
+
+Example:
+
+```python
+items = [
+    {""name"": ""Alice"", ""age"": 30},
+    {""name"": ""Bob"", ""age"": 25},
+    {""name"": ""Charlie"", ""age"": 35}
+]
+
+sorted_items = sort_dicts_by_key(items, ""age"")
+print(sorted_items)
+```
+
+Output:
+
+```python
+[{'name': 'Bob', 'age': 25}, {'name': 'Alice', 'age': 30}, {'name': 'Charlie', 'age': 35}]
+```
+
+If you want, I can also show:
+- sorting in place
+- sorting by nested keys
+- handling missing keys more safely",785,193,978,0.00023355,1.4,1,[]
+lean,o3,What is the weather in Doha today?,none,none,"I don’t know — I only have access to 2022 FIFA World Cup data and related tournament prose, not live weather information.",779,31,810,0.00013544999999999999,0.799,1,[]
+lean,o4,Who is going to win the 2026 World Cup?,none,none,"I don’t know — I only have reliable data about the 2022 FIFA World Cup, and I can’t predict the 2026 winner.",783,34,817,0.00013785,0.963,1,[]
