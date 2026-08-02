@@ -1,4 +1,11 @@
-from app.helpers import answer_or_fallback, format_caption, thumbs_to_score
+from types import SimpleNamespace
+
+from app.helpers import (
+    answer_or_fallback,
+    format_caption,
+    format_verdict,
+    thumbs_to_score,
+)
 
 METADATA = {
     "model_used": "gpt-5.4-mini",
@@ -38,3 +45,29 @@ def test_thumbs_to_score():
 def test_answer_or_fallback():
     assert answer_or_fallback("An answer.") == "An answer."
     assert answer_or_fallback(None) == "(no answer — iteration cap reached)"
+
+
+def verdict(relevance, explanation="Because."):
+    return SimpleNamespace(relevance=relevance, explanation=explanation, cost=0.0001)
+
+
+def test_format_verdict_colours_each_relevance():
+    assert ":green-badge[judge: RELEVANT]" in format_verdict(verdict("RELEVANT"))
+    assert ":orange-badge[judge: PARTLY_RELEVANT]" in format_verdict(
+        verdict("PARTLY_RELEVANT")
+    )
+    assert ":red-badge[judge: NON_RELEVANT]" in format_verdict(
+        verdict("NON_RELEVANT")
+    )
+
+
+def test_format_verdict_includes_the_explanation():
+    assert "Because." in format_verdict(verdict("RELEVANT"))
+
+
+def test_format_verdict_is_empty_when_the_judge_did_not_run():
+    assert format_verdict(None) == ""
+
+
+def test_format_verdict_falls_back_to_grey_for_an_unknown_label():
+    assert ":grey-badge[judge: WEIRD]" in format_verdict(verdict("WEIRD"))

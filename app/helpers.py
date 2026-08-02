@@ -19,3 +19,18 @@ def thumbs_to_score(value: int) -> int:
 def answer_or_fallback(answer) -> str:
     """The conversations.answer column is NOT NULL; cover the iteration-cap case."""
     return answer if answer is not None else "(no answer — iteration cap reached)"
+
+
+JUDGE_BADGE_COLORS = {
+    "RELEVANT": "green",
+    "PARTLY_RELEVANT": "orange",
+    "NON_RELEVANT": "red",
+}
+
+
+def format_verdict(verdict) -> str:
+    """Badge markdown for a monitoring.judge.JudgeVerdict; '' if it never ran."""
+    if verdict is None:
+        return ""
+    color = JUDGE_BADGE_COLORS.get(verdict.relevance, "grey")
+    return f":{color}-badge[judge: {verdict.relevance}] {verdict.explanation}"
