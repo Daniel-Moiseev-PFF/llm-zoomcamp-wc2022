@@ -1,0 +1,561 @@
+{
+  "id": null,
+  "uid": "wc2026-monitoring",
+  "title": "World Cup 2022 agent — monitoring",
+  "description": "Online evaluation of the WC2022 routing agent: user feedback, LLM-as-judge relevance, cost, latency and tool routing.",
+  "tags": [
+    "llm-zoomcamp",
+    "wc2026"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 0,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Feedback rate",
+      "description": "Answers per bucket split by the latest user thumb. A changed thumb inserts a new row, so only the most recent one per conversation counts.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "interval": "5m",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeGroup(c.timestamp, $__interval, 0) AS time,\n  SUM(CASE WHEN uf.score > 0 THEN 1 ELSE 0 END) AS thumbs_up,\n  SUM(CASE WHEN uf.score < 0 THEN 1 ELSE 0 END) AS thumbs_down,\n  SUM(CASE WHEN uf.conversation_id IS NULL THEN 1 ELSE 0 END) AS no_feedback\nFROM monitoring.conversations c\nLEFT JOIN (\n  SELECT DISTINCT ON (conversation_id) conversation_id, score\n  FROM monitoring.feedback\n  WHERE source = 'user'\n  ORDER BY conversation_id, timestamp DESC, id DESC\n) uf ON uf.conversation_id = c.id\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Response time",
+      "description": "Whole-loop latency, including tool calls. p95 is the one that matters — mixed-routing turns are much slower than SQL-only ones.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "interval": "5m",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeGroup(c.timestamp, $__interval, NULL) AS time,\n  AVG(c.response_time) AS avg_seconds,\n  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY c.response_time) AS p95_seconds\nFROM monitoring.conversations c\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Cost — agent vs judge",
+      "description": "Judging every answer is a second LLM call, so it gets its own series.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "interval": "5m",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 70,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "currencyUSD",
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeGroup(c.timestamp, $__interval, 0) AS time,\n  SUM(c.cost) AS agent_cost,\n  COALESCE(SUM(jf.cost), 0) AS judge_cost\nFROM monitoring.conversations c\nLEFT JOIN (\n  SELECT conversation_id, SUM(cost) AS cost\n  FROM monitoring.feedback\n  WHERE source = 'judge'\n  GROUP BY conversation_id\n) jf ON jf.conversation_id = c.id\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Tokens",
+      "description": "Prompt tokens dominate: the instructions are long and every tool result is echoed back into the next request.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "interval": "5m",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "auto",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeGroup(c.timestamp, $__interval, NULL) AS time,\n  AVG(c.prompt_tokens) AS avg_prompt_tokens,\n  AVG(c.completion_tokens) AS avg_completion_tokens,\n  AVG(c.total_tokens) AS avg_total_tokens\nFROM monitoring.conversations c\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY 1\nORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "piechart",
+      "title": "Judge relevance",
+      "description": "LLM-as-judge verdicts on live answers.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "RELEVANT": {
+                  "color": "green",
+                  "index": 0
+                },
+                "PARTLY_RELEVANT": {
+                  "color": "orange",
+                  "index": 1
+                },
+                "NON_RELEVANT": {
+                  "color": "red",
+                  "index": 2
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": true,
+          "calcs": [],
+          "fields": ""
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT\n  f.relevance,\n  COUNT(*) AS count\nFROM monitoring.feedback f\nWHERE f.source = 'judge'\n  AND f.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY f.relevance\nORDER BY 2 DESC"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "piechart",
+      "title": "Tool routing",
+      "description": "Which knowledge-base half each question reached: sql-only, prose-only, mixed, or none (answered or declined without tools).",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": true,
+          "calcs": [],
+          "fields": ""
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "WITH tools AS (\n  SELECT c.id,\n         COALESCE(bool_or(e.call->>'name' = 'execute_sql'), false) AS used_sql,\n         COALESCE(bool_or(e.call->>'name' IN ('search_prose', 'read_section')), false) AS used_prose\n  FROM monitoring.conversations c\n  LEFT JOIN LATERAL jsonb_array_elements(c.tool_calls) AS e(call) ON TRUE\n  WHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\n  GROUP BY c.id\n),\npaths AS (\n  SELECT id,\n         CASE WHEN used_sql AND used_prose THEN 'mixed'\n              WHEN used_sql               THEN 'sql-only'\n              WHEN used_prose             THEN 'prose-only'\n              ELSE 'none' END AS tool_path\n  FROM tools\n)\nSELECT tool_path, COUNT(*) AS conversations\nFROM paths\nGROUP BY tool_path\nORDER BY 2 DESC"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "barchart",
+      "title": "Tool calls by tool",
+      "description": "Individual tool calls, so repeated SQL attempts show up.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "groupWidth": 0.7,
+            "barWidth": 0.9
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "tool",
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT\n  e.call->>'name' AS tool,\n  COUNT(*) AS calls\nFROM monitoring.conversations c\nCROSS JOIN LATERAL jsonb_array_elements(c.tool_calls) AS e(call)\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nGROUP BY 1\nORDER BY 2 DESC"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Feedback by tool path",
+      "description": "User thumbs and judge verdicts per routing path — where the agent is doing well and where it isn't.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "groupWidth": 0.7,
+            "barWidth": 0.9
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "xField": "tool_path",
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "WITH tools AS (\n  SELECT c.id,\n         COALESCE(bool_or(e.call->>'name' = 'execute_sql'), false) AS used_sql,\n         COALESCE(bool_or(e.call->>'name' IN ('search_prose', 'read_section')), false) AS used_prose\n  FROM monitoring.conversations c\n  LEFT JOIN LATERAL jsonb_array_elements(c.tool_calls) AS e(call) ON TRUE\n  WHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\n  GROUP BY c.id\n),\npaths AS (\n  SELECT id,\n         CASE WHEN used_sql AND used_prose THEN 'mixed'\n              WHEN used_sql               THEN 'sql-only'\n              WHEN used_prose             THEN 'prose-only'\n              ELSE 'none' END AS tool_path\n  FROM tools\n),\nlatest_user AS (\n  SELECT DISTINCT ON (f.conversation_id) f.conversation_id, f.score\n  FROM monitoring.feedback f\n  WHERE f.source = 'user'\n  ORDER BY f.conversation_id, f.timestamp DESC, f.id DESC\n),\nlatest_judge AS (\n  SELECT DISTINCT ON (f.conversation_id) f.conversation_id, f.relevance\n  FROM monitoring.feedback f\n  WHERE f.source = 'judge'\n  ORDER BY f.conversation_id, f.timestamp DESC, f.id DESC\n)\nSELECT\n  p.tool_path,\n  SUM(CASE WHEN u.score > 0 THEN 1 ELSE 0 END) AS thumbs_up,\n  SUM(CASE WHEN u.score < 0 THEN 1 ELSE 0 END) AS thumbs_down,\n  SUM(CASE WHEN j.relevance = 'RELEVANT' THEN 1 ELSE 0 END) AS judge_relevant,\n  SUM(CASE WHEN j.relevance = 'PARTLY_RELEVANT' THEN 1 ELSE 0 END) AS judge_partly,\n  SUM(CASE WHEN j.relevance = 'NON_RELEVANT' THEN 1 ELSE 0 END) AS judge_non_relevant\nFROM paths p\nLEFT JOIN latest_user u ON u.conversation_id = p.id\nLEFT JOIN latest_judge j ON j.conversation_id = p.id\nGROUP BY p.tool_path\nORDER BY p.tool_path"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Recent conversations",
+      "description": "Latest turns with both scores side by side. Questions prefixed [seed] are fabricated by monitoring.seed.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "wc2026-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "wc2026-postgres"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT\n  c.timestamp AS time,\n  c.question,\n  LEFT(c.answer, 240) AS answer,\n  j.relevance AS judge,\n  u.score AS thumb,\n  c.response_time,\n  c.cost\nFROM monitoring.conversations c\nLEFT JOIN LATERAL (\n  SELECT f.relevance FROM monitoring.feedback f\n  WHERE f.conversation_id = c.id AND f.source = 'judge'\n  ORDER BY f.timestamp DESC, f.id DESC LIMIT 1\n) j ON TRUE\nLEFT JOIN LATERAL (\n  SELECT f.score FROM monitoring.feedback f\n  WHERE f.conversation_id = c.id AND f.source = 'user'\n  ORDER BY f.timestamp DESC, f.id DESC LIMIT 1\n) u ON TRUE\nWHERE c.timestamp BETWEEN $__timeFrom() AND $__timeTo()\nORDER BY c.timestamp DESC\nLIMIT 10"
+        }
+      ]
+    }
+  ]
+}

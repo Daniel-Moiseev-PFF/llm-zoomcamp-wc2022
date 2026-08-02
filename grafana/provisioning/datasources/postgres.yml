@@ -1,0 +1,32 @@
+# Postgres datasource, provisioned from this file rather than clicked together
+# in the UI (llm-zoomcamp 05-monitoring lesson 12 does the latter). Committing
+# it means `docker compose up` yields a working dashboard with nothing to set up.
+#
+# The $POSTGRES_* values are interpolated by Grafana from its own environment,
+# which docker-compose.yml passes through from .env — so no password is
+# committed here.
+apiVersion: 1
+
+datasources:
+  - name: WC2026 Postgres
+    # Every panel references this uid; changing it orphans the whole dashboard.
+    uid: wc2026-postgres
+    type: grafana-postgresql-datasource
+    access: proxy
+    # The compose service name, not localhost: Grafana reaches Postgres across
+    # the compose network, where it still listens on 5432.
+    url: postgres:5432
+    user: $POSTGRES_USER
+    database: $POSTGRES_DB
+    isDefault: true
+    editable: false
+    jsonData:
+      database: $POSTGRES_DB # where Grafana 11+ looks for it
+      sslmode: disable # pgvector/pgvector:pg16 serves no TLS
+      postgresVersion: 1600
+      timescaledb: false
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: $POSTGRES_PASSWORD
