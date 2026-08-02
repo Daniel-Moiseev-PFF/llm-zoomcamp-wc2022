@@ -21,7 +21,10 @@ set -a && . ./.env && set +a
 OUT=data/kb.sql.gz
 mkdir -p data
 
-docker exec "${POSTGRES_CONTAINER:-wc2026-postgres}" pg_dump \
+# `docker compose exec` rather than `docker exec <name>`: the services carry no
+# hardcoded container_name, so names are project-scoped and two stacks can run
+# side by side.
+docker compose exec -T postgres pg_dump \
     -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
     --schema=football --schema=prose \
     --no-owner --no-privileges \

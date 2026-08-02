@@ -86,6 +86,32 @@ def test_the_seeder_is_idempotent(services):
     assert "--purge" in command
 
 
+def test_published_ports_can_be_moved(services):
+    # A reviewer with their own Postgres on 5432 would otherwise fail on the
+    # very first `up` with an opaque bind error.
+    published = [
+        port for name in ("postgres", "grafana", "app") for port in services[name]["ports"]
+    ]
+    assert published
+    for port in published:
+        assert port.startswith("${"), port
+
+
+def test_containers_dial_postgres_on_its_internal_port(services):
+    # POSTGRES_PORT in .env moves the published port. If it leaked into the
+    # containers they would dial a port that is not open inside the network.
+    for name in PYTHON_SERVICES:
+        assert services[name]["environment"]["POSTGRES_PORT"] == "5432", name
+
+
+def test_no_service_hardcodes_a_container_name(services):
+    # Container names are global to the daemon, so a hardcoded one stops the
+    # stack running alongside a second copy of itself — which is exactly what
+    # verifying the fresh-clone path requires.
+    for name, service in services.items():
+        assert "container_name" not in service, name
+
+
 def test_the_image_installs_from_the_lockfile():
     # --frozen fails rather than re-resolving when uv.lock and pyproject
     # disagree; that is what makes the build reproducible.

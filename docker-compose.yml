@@ -6,6 +6,10 @@ x-python: &python
   env_file: .env
   environment:
     POSTGRES_HOST: postgres
+    # Inside the network Postgres always listens on 5432. POSTGRES_PORT in .env
+    # moves the *published* port for the host workflow, and must not leak in
+    # here or these services would dial a port that isn't open.
+    POSTGRES_PORT: "5432"
   depends_on:
     postgres:
       condition: service_healthy
@@ -13,9 +17,9 @@ x-python: &python
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: wc2026-postgres
     ports:
-      - "5432:5432"
+      # Override in .env if a port is already taken on your machine.
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -34,9 +38,8 @@ services:
 
   grafana:
     image: grafana/grafana:13.1.1
-    container_name: wc2026-grafana
     ports:
-      - "3000:3000"
+      - "${GRAFANA_PORT:-3000}:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -54,9 +57,8 @@ services:
 
   app:
     <<: *python
-    container_name: wc2026-app
     ports:
-      - "8501:8501"
+      - "${APP_PORT:-8501}:8501"
 
   # Fabricated, back-dated traffic so the dashboard is not empty on first open.
   # Makes no LLM calls. Purge-then-seed keeps a repeated `up` idempotent; the
@@ -64,7 +66,6 @@ services:
   # panels' default now-6h window.
   seed:
     <<: *python
-    container_name: wc2026-seed
     restart: "no"
     command:
       - sh
