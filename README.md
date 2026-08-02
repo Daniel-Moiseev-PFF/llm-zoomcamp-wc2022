@@ -24,6 +24,30 @@ flowchart TD
     AGENT -. log .-> MON[(Interactions<br/>+ feedback)]
     MON --> GRAF[Grafana dashboard]
 ```
+## Setup
+
+```bash
+cp .env.example .env     # POSTGRES_* are already filled in
+# add your OPENAI_API_KEY
+docker compose up -d
+```
+
+That is it. Chat at http://localhost:8501, dashboard at
+http://localhost:3000 (admin / admin).
+
+**No football API key is strictly needed.** The knowledge base ships pre-loaded:
+`data/kb.sql.gz` (614 KB) is restored automatically the first time Postgres
+starts on an empty volume. Rebuilding it from the live API would cost ~131
+requests against a free-tier cap of 100/day — two days — which is I decided to ship
+it with data. `FOOTBALL_API_KEY` matters only if you want to re-run the structured
+ingestion yourself and you are certainly welcome to (see [Rebuilding from source](#rebuilding-from-source)).
+
+The dashboard is populated on first boot too, by a one-shot `seed` service that
+fabricates back-dated traffic. It makes no LLM calls, and its rows are marked
+`[seed]`. It's meant to be an illustration of what a used app would look like.
+
+If a port is already taken — a local Postgres on 5432 is the usual culprit —
+set `POSTGRES_PORT`, `GRAFANA_PORT` or `APP_PORT` in `.env`.
 
 ---
 
@@ -39,7 +63,7 @@ Ingested **once** from API-Football (World Cup = `league id 1`). Entities pulled
 
 Lineups are the key table: they power relational questions like *"did players X and Y play against each other?"* — a self-join on appearances in the same match on opposite teams.
 
-**Ingestion:** dlt (REST-API source → Postgres destination), re-runnable.
+**Ingestion:** dlt (REST-API source → Postgres destination), re-runnable. Makes 132 calls to Football API, so takes 2 days to fully populate on their free tier.
 
 *Data-source reference: [API-Football data model](https://www.api-football.com/public/img/news/archi-beta.jpg)*
 
@@ -119,7 +143,7 @@ monitoring above, which scores live traffic:
 - **Answer quality:** three agent prompt variants scored by a reference-aware
   LLM-as-judge; the winner becomes `agent/instructions.py`
 
-Both reuse `monitoring/llm.py`'s transport. The offline judge defines its own
+Both reuse `monitoring/llm.py`'. The offline judge defines its own
 labels rather than reusing `RelevanceVerdict` — relevance and correctness are
 different questions, and sharing the model would make two incomparable numbers
 look comparable.
@@ -129,30 +153,6 @@ below, and the generated results in [docs/evaluation-results.md](docs/evaluation
 
 ---
 
-## Setup
-
-```bash
-cp .env.example .env     # POSTGRES_* are already filled in
-# add your OPENAI_API_KEY
-docker compose up -d
-```
-
-That is the whole thing. Chat at http://localhost:8501, dashboard at
-http://localhost:3000 (admin / admin).
-
-**No football API key is needed.** The knowledge base ships pre-loaded:
-`data/kb.sql.gz` (614 KB) is restored automatically the first time Postgres
-starts on an empty volume. Rebuilding it from the live API would cost ~131
-requests against a free-tier cap of 100/day — two days — which is why it ships
-as data. `FOOTBALL_API_KEY` matters only if you want to re-run the structured
-ingestion yourself (see [Rebuilding from source](#rebuilding-from-source)).
-
-The dashboard is populated on first boot too, by a one-shot `seed` service that
-fabricates back-dated traffic. It makes no LLM calls, and its rows are marked
-`[seed]`.
-
-If a port is already taken — a local Postgres on 5432 is the usual culprit —
-set `POSTGRES_PORT`, `GRAFANA_PORT` or `APP_PORT` in `.env`.
 
 ### Dependency versions
 
