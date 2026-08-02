@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 MAX_ITERATIONS = 10
 
 
-def run_agent_loop(client, model, tools, tool_schemas, question, history=None):
+def run_agent_loop(
+    client, model, tools, tool_schemas, question, history=None, instructions=INSTRUCTIONS
+):
     """Run the agent until it produces a final answer (or hits MAX_ITERATIONS).
 
     Args:
@@ -27,6 +29,8 @@ def run_agent_loop(client, model, tools, tool_schemas, question, history=None):
         question: the user's question for this turn.
         history: full message list from a previous turn (multi-turn chat),
             or None for a fresh conversation.
+        instructions: the developer message for a fresh conversation. Defaults
+            to the shipped INSTRUCTIONS; the offline evaluation passes variants.
 
     Returns:
         (answer, messages, metadata) where
@@ -53,7 +57,7 @@ def run_agent_loop(client, model, tools, tool_schemas, question, history=None):
     if history:
         messages = list(history)
     else:
-        messages = [{"role": "developer", "content": INSTRUCTIONS}]
+        messages = [{"role": "developer", "content": instructions}]
     messages.append({"role": "user", "content": question})
 
     answer = None

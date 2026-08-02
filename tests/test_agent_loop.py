@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+from agent.instructions import INSTRUCTIONS
 from agent.loop import MAX_ITERATIONS, run_agent_loop
 
 
@@ -59,6 +60,32 @@ def test_first_messages_are_developer_then_user():
     _, messages, _ = run_agent_loop(client, "test-model", TOOLS, SCHEMAS, "Q?")
     assert messages[0]["role"] == "developer"
     assert messages[1] == {"role": "user", "content": "Q?"}
+
+
+def test_custom_instructions_reach_the_developer_message():
+    # The offline evaluation runs the same loop under several instruction
+    # variants; without this it could only ever score the shipped prompt.
+    client = FakeClient([SimpleNamespace(output=[message("Hi.")], usage=usage(1, 1))])
+    _, messages, _ = run_agent_loop(
+        client, "test-model", TOOLS, SCHEMAS, "Q?", instructions="Be terse."
+    )
+    assert messages[0] == {"role": "developer", "content": "Be terse."}
+
+
+def test_the_shipped_instructions_are_the_default():
+    client = FakeClient([SimpleNamespace(output=[message("Hi.")], usage=usage(1, 1))])
+    _, messages, _ = run_agent_loop(client, "test-model", TOOLS, SCHEMAS, "Q?")
+    assert messages[0]["content"] == INSTRUCTIONS
+
+
+def test_history_still_suppresses_the_developer_message_with_custom_instructions():
+    client = FakeClient([SimpleNamespace(output=[message("Hi.")], usage=usage(1, 1))])
+    history = [{"role": "developer", "content": "Be terse."}]
+    _, messages, _ = run_agent_loop(
+        client, "test-model", TOOLS, SCHEMAS, "Q?", history=history,
+        instructions="Be terse.",
+    )
+    assert sum(1 for m in messages if isinstance(m, dict) and m.get("role") == "developer") == 1
 
 
 def test_tool_call_is_dispatched_and_result_sent_back():
