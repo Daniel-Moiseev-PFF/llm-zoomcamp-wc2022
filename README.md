@@ -287,10 +287,23 @@ be purged cleanly.
 
 ## Evaluation (retrieval arms + prompt variants)
 
-Two independent comparisons, each ending in a change to the running system.
-Results — including both full tables and the caveats — are generated into
+Two independent comparisons, each ending in the configuration the system runs
+on. Results — both full tables, the questions every variant missed, and the
+caveats — are generated into
 [docs/evaluation-results.md](docs/evaluation-results.md); it is written by
 `evaluation/report.py` and should never be edited by hand.
+
+Both comparisons confirmed what was already shipped rather than overturning it:
+**vector** retrieval (MRR 0.6124 over hybrid's 0.5924, on 534 generated
+questions) and the **full** prompt (70.0% CORRECT against lean's 66.7% and
+guided's 63.3%, on 30 curated references). The prompt spread is a few answers
+out of thirty, so the honest reading is that neither alternative beats the
+shipped prompt — not that it is the best possible one.
+
+The more useful output was the six questions *no* variant got right. Two are
+real defects, both below the prompt layer: shootout penalties are stored as
+`Goal` events at minute 120 and inflate every goal count, and the agent answers
+off-topic coding requests instead of declining.
 
 ### Retrieval — which arm the agent searches with
 
