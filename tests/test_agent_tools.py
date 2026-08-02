@@ -1,7 +1,14 @@
 import json
 from types import SimpleNamespace
 
-from agent.tools import MAX_ROWS, TOOL_SCHEMAS, execute_sql, make_call, read_section
+from agent.tools import (
+    MAX_ROWS,
+    TOOL_SCHEMAS,
+    execute_sql,
+    make_call,
+    read_section,
+    round_scores,
+)
 
 
 class FakeCursor:
@@ -90,6 +97,18 @@ def test_make_call_dispatches_and_wraps_output():
     assert output["type"] == "function_call_output"
     assert output["call_id"] == "c1"
     assert json.loads(output["output"]) == {"hello": "Ada"}
+
+
+def test_round_scores_handles_whichever_field_the_active_arm_produces():
+    # search_prose returns whatever DEFAULT_ARM produced: the vector arm scores
+    # with `similarity`, the lexical arm with `rank`, the hybrid arm with
+    # `rrf_score`. Switching the default arm must not KeyError in the chat.
+    results = [{"similarity": 0.87654}, {"rank": 0.12345}, {"rrf_score": 0.66666}]
+    assert round_scores(results) == [
+        {"similarity": 0.877},
+        {"rank": 0.123},
+        {"rrf_score": 0.667},
+    ]
 
 
 def test_tool_schemas_cover_all_tools():

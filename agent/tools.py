@@ -10,6 +10,10 @@ from ingestion.prose.search import search as prose_search
 
 MAX_ROWS = 50
 
+# Each retrieval arm scores with its own field; prose_search returns whichever
+# one the active DEFAULT_ARM produced.
+SCORE_FIELDS = ("similarity", "rank", "rrf_score")
+
 
 def execute_sql(conn, query: str) -> dict:
     """Run a read-only query; DB errors come back as output, not exceptions,
@@ -32,11 +36,16 @@ def execute_sql(conn, query: str) -> dict:
     return result
 
 
-def search_prose(conn, embedder, query: str, team: str | None = None) -> list[dict]:
-    results = prose_search(query, embedder, conn, team=team)
+def round_scores(results: list[dict]) -> list[dict]:
     for r in results:
-        r["similarity"] = round(float(r["similarity"]), 3)
+        for field in SCORE_FIELDS:
+            if field in r:
+                r[field] = round(float(r[field]), 3)
     return results
+
+
+def search_prose(conn, embedder, query: str, team: str | None = None) -> list[dict]:
+    return round_scores(prose_search(query, embedder, conn, team=team))
 
 
 def read_section(conn, article: str, section: str) -> str:

@@ -20,8 +20,19 @@ CREATE_TABLE_SQL = f"""
         chunk_index INT NOT NULL,
         content TEXT NOT NULL,
         teams_mentioned TEXT[] NOT NULL,
-        embedding vector({EMBEDDING_DIM}) NOT NULL
+        embedding vector({EMBEDDING_DIM}) NOT NULL,
+        content_tsv tsvector GENERATED ALWAYS AS (
+            setweight(to_tsvector('english', section), 'A') ||
+            setweight(to_tsvector('english', content), 'B')
+        ) STORED
     )
+"""
+
+# Naming the regconfig is what makes to_tsvector immutable, and immutability is
+# what makes it legal in a generated column. Bare to_tsvector(content) depends
+# on default_text_search_config and Postgres rejects it here.
+CREATE_TSV_INDEX_SQL = """
+    CREATE INDEX chunks_content_tsv_idx ON prose.chunks USING GIN (content_tsv)
 """
 
 INSERT_SQL = """
@@ -56,6 +67,7 @@ def recreate_table(conn) -> None:
     conn.execute("CREATE SCHEMA IF NOT EXISTS prose")
     conn.execute("DROP TABLE IF EXISTS prose.chunks")
     conn.execute(CREATE_TABLE_SQL)
+    conn.execute(CREATE_TSV_INDEX_SQL)
 
 
 def insert_rows(conn, rows) -> None:
