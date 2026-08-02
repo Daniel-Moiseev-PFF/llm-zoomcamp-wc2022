@@ -30,6 +30,10 @@ def init_db(conn) -> None:
           conversation_id INTEGER REFERENCES monitoring.conversations(id),
           source TEXT NOT NULL, relevance TEXT, explanation TEXT,
           score INTEGER, timestamp TIMESTAMP WITH TIME ZONE NOT NULL)
+      ALTER TABLE monitoring.feedback ADD COLUMN IF NOT EXISTS cost FLOAT
+      CREATE INDEX IF NOT EXISTS conversations_timestamp_idx ...
+      CREATE INDEX IF NOT EXISTS feedback_conversation_id_idx ...
+      CREATE INDEX IF NOT EXISTS feedback_timestamp_idx ...
     """
     conn.execute("CREATE SCHEMA IF NOT EXISTS monitoring")
     conn.execute(
@@ -51,10 +55,26 @@ def init_db(conn) -> None:
             score INTEGER, timestamp TIMESTAMP WITH TIME ZONE NOT NULL)
         """
     )
+    # Added after the table shipped, so it has to be a separate ALTER: the
+    # judge is a second LLM call per question and pays its own way.
+    conn.execute("ALTER TABLE monitoring.feedback ADD COLUMN IF NOT EXISTS cost FLOAT")
+    # Every dashboard panel filters on timestamp and joins feedback by conversation.
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS conversations_timestamp_idx "
+        "ON monitoring.conversations (timestamp)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS feedback_conversation_id_idx "
+        "ON monitoring.feedback (conversation_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS feedback_timestamp_idx "
+        "ON monitoring.feedback (timestamp)"
+    )
     conn.commit()
 
 
-def save_conversation(conn, question, answer, metadata, cost) -> int:
+def save_conversation(conn, question, answer, metadata, cost, timestamp=None) -> int:
     """INSERT one answered question into monitoring.conversations; return its id.
 
     `metadata` is run_agent_loop's dict: model_used, prompt_tokens,
@@ -67,7 +87,8 @@ def save_conversation(conn, question, answer, metadata, cost) -> int:
     - tool_calls: pass json.dumps(metadata["tool_calls"]) as a string param
       with a `%s::jsonb` cast in the SQL (same trick as `%s::vector` in
       ingestion/prose/store.py)
-    - timestamp: datetime.now(DB_TIMEZONE)
+    - timestamp: defaults to datetime.now(DB_TIMEZONE); monitoring.seed passes
+      one explicitly to back-date fabricated traffic
     - `RETURNING id`, fetch it, commit, return it (course db_save.py does this)
     """
     SQL = """
@@ -77,6 +98,8 @@ def save_conversation(conn, question, answer, metadata, cost) -> int:
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
         RETURNING id
     """
+    if timestamp is None:
+        timestamp = datetime.now(DB_TIMEZONE)
     with conn.cursor() as cur:
         cur.execute(
             SQL,
@@ -90,7 +113,7 @@ def save_conversation(conn, question, answer, metadata, cost) -> int:
                 metadata["response_time"],
                 cost,
                 json.dumps(metadata["tool_calls"]),
-                datetime.now(DB_TIMEZONE),
+                timestamp,
             ),
         )
         conversation_id = cur.fetchone()[0]
@@ -99,29 +122,34 @@ def save_conversation(conn, question, answer, metadata, cost) -> int:
 
 
 def save_feedback(
-    conn, conversation_id, source, relevance=None, explanation=None, score=None
+    conn,
+    conversation_id,
+    source,
+    relevance=None,
+    explanation=None,
+    score=None,
+    cost=None,
+    timestamp=None,
 ) -> None:
     """INSERT one feedback row; commit. Course db_feedback.py, schema-qualified.
 
-    `source` is 'user' (👍/👎 → score=±1) or 'judge' (relevance + explanation,
-    added in the monitoring milestone). Param order: conversation_id, source,
-    relevance, explanation, score, timestamp (datetime.now(DB_TIMEZONE)).
+    `source` is 'user' (👍/👎 → score=±1) or 'judge' (relevance + explanation +
+    what the judge call cost). Param order: conversation_id, source, relevance,
+    explanation, score, timestamp, cost — `cost` trails the original six
+    because it was added to the table after it shipped.
+
+    `timestamp` defaults to now; monitoring.seed passes one to back-date rows.
     """
     SQL = """
         INSERT INTO monitoring.feedback
-            (conversation_id, source, relevance, explanation, score, timestamp)
-        VALUES (%s, %s, %s, %s, %s, %s)
+            (conversation_id, source, relevance, explanation, score, timestamp, cost)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
+    if timestamp is None:
+        timestamp = datetime.now(DB_TIMEZONE)
     conn.execute(
         SQL,
-        (
-            conversation_id,
-            source,
-            relevance,
-            explanation,
-            score,
-            datetime.now(DB_TIMEZONE),
-        ),
+        (conversation_id, source, relevance, explanation, score, timestamp, cost),
     )
     conn.commit()
 

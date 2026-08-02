@@ -1,6 +1,7 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
+from monitoring import DB_TIMEZONE
 from monitoring.db import init_db, save_conversation, save_feedback
 
 
@@ -113,3 +114,64 @@ def test_save_feedback_judge_shape():
     save_feedback(conn, 7, "judge", relevance="RELEVANT", explanation="On topic.")
     _, params = conn.statements[-1]
     assert list(params)[:5] == [7, "judge", "RELEVANT", "On topic.", None]
+
+
+def test_init_db_adds_the_judge_cost_column():
+    conn = FakeConnection()
+    init_db(conn)
+    sql = "\n".join(query for query, _ in conn.statements)
+    assert "ALTER TABLE monitoring.feedback ADD COLUMN IF NOT EXISTS cost" in sql
+
+
+def test_init_db_creates_the_indexes_the_dashboard_needs():
+    conn = FakeConnection()
+    init_db(conn)
+    sql = "\n".join(query for query, _ in conn.statements)
+    # Every Grafana panel filters on timestamp and joins feedback by conversation.
+    assert "CREATE INDEX IF NOT EXISTS conversations_timestamp_idx" in sql
+    assert "CREATE INDEX IF NOT EXISTS feedback_conversation_id_idx" in sql
+    assert "CREATE INDEX IF NOT EXISTS feedback_timestamp_idx" in sql
+    assert "DROP" not in sql.upper()
+
+
+def test_save_conversation_accepts_an_explicit_timestamp():
+    # The seed generator back-dates rows so the dashboard has history to plot.
+    conn = FakeConnection(fetchone_result=(1,))
+    backdated = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    save_conversation(conn, "Q?", "A.", METADATA, 0.0012, timestamp=backdated)
+    _, params = conn.statements[-1]
+    assert list(params)[9] == backdated
+
+
+def test_save_conversation_defaults_the_timestamp_to_now():
+    conn = FakeConnection(fetchone_result=(1,))
+    save_conversation(conn, "Q?", "A.", METADATA, 0.0012)
+    _, params = conn.statements[-1]
+    assert abs(list(params)[9] - datetime.now(DB_TIMEZONE)) < timedelta(seconds=5)
+
+
+def test_save_feedback_accepts_an_explicit_timestamp():
+    conn = FakeConnection()
+    backdated = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    save_feedback(conn, 7, "user", score=1, timestamp=backdated)
+    _, params = conn.statements[-1]
+    assert list(params)[5] == backdated
+
+
+def test_save_feedback_stores_the_judge_cost():
+    # The judge is a second LLM call per question; a cost chart that ignores it
+    # under-reports by roughly half.
+    conn = FakeConnection()
+    save_feedback(
+        conn, 7, "judge", relevance="RELEVANT", explanation="On topic.", cost=0.00042
+    )
+    query, params = conn.statements[-1]
+    assert "cost" in query
+    assert list(params)[6] == 0.00042
+
+
+def test_save_feedback_cost_is_null_for_a_user_thumb():
+    conn = FakeConnection()
+    save_feedback(conn, 7, "user", score=-1)
+    _, params = conn.statements[-1]
+    assert list(params)[6] is None
