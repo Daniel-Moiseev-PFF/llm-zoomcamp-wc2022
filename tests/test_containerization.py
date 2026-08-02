@@ -121,6 +121,14 @@ def test_the_image_installs_from_the_lockfile():
     assert "--no-dev" in dockerfile
 
 
+def test_the_image_puts_the_project_on_the_import_path():
+    # The project is installed with --no-install-project, so `agent` and friends
+    # are importable only by path. `python -m` puts the cwd on sys.path and works,
+    # but streamlit puts the *script's* directory there instead — so
+    # `streamlit run app/main.py` sees /app/app and not /app.
+    assert "PYTHONPATH=/app" in DOCKERFILE_PATH.read_text()
+
+
 def test_the_uv_image_is_pinned():
     # A floating :latest tag would defeat the point of --frozen.
     assert "astral-sh/uv:latest" not in DOCKERFILE_PATH.read_text()

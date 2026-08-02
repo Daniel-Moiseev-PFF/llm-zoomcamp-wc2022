@@ -19,8 +19,13 @@ FROM python:3.12-slim AS runtime
 
 COPY --from=ghcr.io/astral-sh/uv:0.11.20 /uv /usr/local/bin/uv
 WORKDIR /app
+# PYTHONPATH is what makes --no-install-project work below. `python -m` puts the
+# cwd on sys.path, but streamlit puts the *script's* directory there instead, so
+# `streamlit run app/main.py` would otherwise search /app/app and never find
+# `agent`. Setting it explicitly makes every entry point resolve the same way.
 ENV UV_LINK_MODE=copy \
     PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app \
     PYTHONUNBUFFERED=1
 
 COPY pyproject.toml uv.lock ./
@@ -30,9 +35,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 # (ingestion/prose/__init__.py), resolved from this WORKDIR.
 COPY --from=builder /app/models ./models
 
-# --no-install-project above is deliberate: every entry point runs from /app, so
-# `python -m ingestion.football.pipeline` and `streamlit run app/main.py`
-# resolve by cwd. Installing the project would add a rebuild on every edit.
+# --no-install-project above is deliberate: the packages are imported from /app
+# via PYTHONPATH, so editing a module does not invalidate the dependency layer.
 COPY ingestion/ ./ingestion/
 COPY agent/ ./agent/
 COPY monitoring/ ./monitoring/
