@@ -22,7 +22,7 @@ from ingestion.prose.search import (
 )
 
 METRICS_PATH = DATA_DIR / "retrieval-metrics.csv"
-FIELDNAMES = ["arm", "rrf_k", "hit_rate", "mrr", "questions"]
+FIELDNAMES = ["arm", "rrf_k", "candidates", "hit_rate", "mrr", "questions"]
 
 # k smooths the difference between rank positions: at k=1 the top hit dominates,
 # at k=60 (the value the original RRF paper uses) the lists are nearly equal
@@ -78,6 +78,7 @@ def score_all(
             {
                 "arm": name,
                 "rrf_k": "",
+                "candidates": "",  # only the fused arm reads a deeper pool
                 **evaluate(ground_truth, single_arms[name]),
                 "questions": len(ground_truth),
             }
@@ -90,6 +91,7 @@ def score_all(
             {
                 "arm": "hybrid",
                 "rrf_k": rrf_k,
+                "candidates": candidates or k,
                 **evaluate(ground_truth, hybrid),
                 "questions": len(ground_truth),
             }
@@ -138,11 +140,12 @@ def write_csv(rows, path=METRICS_PATH) -> None:
 
 
 def print_table(rows) -> None:
-    print(f"{'arm':<9} {'rrf_k':>6} {'hit_rate':>9} {'mrr':>7} {'questions':>10}")
+    header = f"{'arm':<9} {'rrf_k':>6} {'cands':>6} {'hit_rate':>9} {'mrr':>7} {'questions':>10}"
+    print(header)
     for row in rows:
         print(
-            f"{row['arm']:<9} {str(row['rrf_k']):>6} {row['hit_rate']:>9.4f} "
-            f"{row['mrr']:>7.4f} {row['questions']:>10}"
+            f"{row['arm']:<9} {str(row['rrf_k']):>6} {str(row['candidates']):>6} "
+            f"{row['hit_rate']:>9.4f} {row['mrr']:>7.4f} {row['questions']:>10}"
         )
 
 

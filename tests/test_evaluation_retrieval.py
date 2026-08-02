@@ -140,4 +140,14 @@ def test_write_csv_round_trips_the_scored_rows(tmp_path):
     written = list(csv.DictReader(path.open(encoding="utf-8")))
     assert len(written) == len(rows)
     assert written[0]["arm"] == "lexical"
-    assert set(written[0]) == {"arm", "rrf_k", "hit_rate", "mrr", "questions"}
+    assert set(written[0]) == {
+        "arm", "rrf_k", "candidates", "hit_rate", "mrr", "questions",
+    }
+
+
+def test_the_hybrid_rows_record_the_candidate_depth_they_used():
+    # Hybrid scores change with the pool depth, so a committed CSV without it
+    # cannot be reproduced.
+    rows = score_all(GROUND_TRUTH, CountingEmbedder(), StubConnection(), k=5, candidates=20)
+    hybrid = [r for r in rows if r["arm"] == "hybrid"]
+    assert {r["candidates"] for r in hybrid} == {20}

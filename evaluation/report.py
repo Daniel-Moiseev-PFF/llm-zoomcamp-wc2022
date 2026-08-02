@@ -57,11 +57,12 @@ def table(headers, rows) -> str:
 
 def retrieval_table(rows) -> str:
     return table(
-        ["arm", "RRF k", "Hit Rate", "MRR", "questions"],
+        ["arm", "RRF k", "candidates", "Hit Rate", "MRR", "questions"],
         [
             [
                 row["arm"],
                 str(row["rrf_k"]) or "—",
+                str(row.get("candidates", "")) or "—",
                 f"{row['hit_rate']:.4f}",
                 f"{row['mrr']:.4f}",
                 str(row["questions"]),
