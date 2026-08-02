@@ -1,3 +1,15 @@
+# Shared by every service that runs this project's Python. POSTGRES_HOST is the
+# one value that differs from the host workflow: postgres_credentials() defaults
+# to localhost, which is right on the host and wrong inside the network.
+x-python: &python
+  build: .
+  env_file: .env
+  environment:
+    POSTGRES_HOST: postgres
+  depends_on:
+    postgres:
+      condition: service_healthy
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -10,6 +22,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Runs only on an empty volume, in lexical order: create the extension,
+      # then restore the knowledge base. Skipped entirely once PGDATA exists.
+      - ./docker/initdb/00-extensions.sql:/docker-entrypoint-initdb.d/00-extensions.sql:ro
+      - ./data/kb.sql.gz:/docker-entrypoint-initdb.d/10-kb.sql.gz:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -35,6 +51,53 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  app:
+    <<: *python
+    container_name: wc2026-app
+    ports:
+      - "8501:8501"
+
+  # Fabricated, back-dated traffic so the dashboard is not empty on first open.
+  # Makes no LLM calls. Purge-then-seed keeps a repeated `up` idempotent; the
+  # seeded rows cannot be shipped in the dump because they age out of the
+  # panels' default now-6h window.
+  seed:
+    <<: *python
+    container_name: wc2026-seed
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - python -m monitoring.seed --purge && python -m monitoring.seed --hours 6 --count 150
+
+  # --profile ingest rebuilds the knowledge base from source. Not needed to run
+  # the app — it ships pre-loaded. Needs FOOTBALL_API_KEY and, under the free
+  # 100/day cap, two days.
+  #   docker compose --profile ingest run --rm ingest-football
+  ingest-football:
+    <<: *python
+    profiles: [ingest]
+    command: ["python", "-m", "ingestion.football.pipeline"]
+
+  # Free — Wikipedia only, no key and no quota.
+  ingest-prose:
+    <<: *python
+    profiles: [ingest]
+    command: ["python", "-m", "ingestion.prose.pipeline"]
+
+  # --profile eval. This half is free and deterministic.
+  eval-retrieval:
+    <<: *python
+    profiles: [eval]
+    command: ["python", "-m", "evaluation.retrieval"]
+
+  # This half spends about $0.13 of OpenAI. Resumable, so a second run is a
+  # no-op rather than a second charge.
+  eval-answers:
+    <<: *python
+    profiles: [eval]
+    command: ["python", "-m", "evaluation.answers"]
 
 volumes:
   pgdata:
