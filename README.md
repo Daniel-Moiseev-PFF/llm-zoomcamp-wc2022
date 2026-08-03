@@ -1,9 +1,29 @@
-# World Cup 2026 — LLM Knowledge Base
+# World Cup 2022 — LLM Knowledge Base
 
-A question-answering system over everything that happened at the 2022 FIFA World Cup — from hard facts (*who advanced to the quarter-finals?*) to open-ended, narrative questions (*what was the biggest scandal involving Switzerland?*).
+*A knowledge base for the previous World Cup*
 
-It combines a **relational database** (structured match data), a **vector index** (tournament prose), and an **agent** that routes each question to the right source — or both.
+## The Problem Statement
 
+Weeks after the 2026 final, every storyline is still vivid, the upsets, the
+goals, the controversies. Qatar 2022 however, not so much. Most people will remember 
+the final, which was the best in living memory, and the controversies
+around the host. 
+
+Those details about the 63 other games and many details surrounding them are not lost,
+they just need to be recalled. Wikipedia holds the spoken narrative, spread across a few
+articles and a hundred tables. The questions one actually wants to ask fall into two very
+different categories:
+
+- *Did Messi and Mbappé play against each other?* — a **relational fact**, and answering it
+  means joining lineups across 64 fixtures to find two players on opposite sides
+  of the same match. Perfect for relational databases.
+- *What was the biggest scandal involving Switzerland?* — a **narrative**, and
+  answering it means reading prose.
+
+This project builds both halves and puts a router in front of them. It
+combines a **relational database** (structured match data), a **vector index**
+(tournament prose), and an **agent** that sends each question to the right
+source — or to both, when a question needs a fact and a narrative at once.
 ---
 
 ## How it works
