@@ -6,3 +6,7 @@ __pycache__/
 .pytest_cache/
 .worktrees/
 models/
+
+# Working notes — design specs and implementation plans. Kept locally, never
+# published; docs/ still ships the generated evaluation results.
+docs/superpowers/
